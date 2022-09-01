@@ -178,29 +178,38 @@ class CbimMxDbEclipse extends MxDbEntity {
     }
 }
 
-export async function DrawEclipseByAction(params) {
-    const getPoint = new MrxDbgUiPrPoint()
-    const mxDraw = MxFun.getCurrentDraw()
-    const worldDrawComment = new McEdGetPointWorldDrawObject()
-    // const mxEllipse = new CbimMxDbEclipse(params)
-    const mxEllipse = new MxDbEllipse()
-    mxEllipse.setLineWidth(params.lineWidth)
-    mxEllipse.setColor(params.color)
-    getPoint.setMessage("\n点击开始绘制椭圆:")
-    const p1: THREE.Vector3 | null = await getPoint.go()
-    // mxEllipse.startPoint = p1
-    mxEllipse.point1 = p1
-    worldDrawComment.setDraw((currentPoint) => {
-        // 动态绘制three.js物体对象
-        // mxEllipse.endPoint = currentPoint
-        mxEllipse.point2 = currentPoint
-        worldDrawComment.drawCustomEntity(mxEllipse)
-    })
-    getPoint.setUserDraw(worldDrawComment)
-    getPoint.setMessage("\n再次点击结束绘制椭圆:")
-    await getPoint.go()
-    mxDraw.addMxEntity(mxEllipse)
-    return mxEllipse
+export async function DrawEclipseByAction(params, context) {
+    const drawings = []
+    context.drawing = true
+    do {
+        const mxDraw = MxFun.getCurrentDraw()
+        const getPoint = new MrxDbgUiPrPoint()
+        // const mxEllipse = new CbimMxDbEclipse(params)
+        const mxEllipse = new MxDbEllipse()
+        mxEllipse.setLineWidth(params.lineWidth)
+        mxEllipse.setColor(params.color)
+        getPoint.setMessage("\n点击开始绘制椭圆:")
+        const p1: THREE.Vector3 | null = await getPoint.go()
+        if (!p1) break
+        // mxEllipse.startPoint = p1
+        mxEllipse.point1 = p1
+        const worldDrawComment = new McEdGetPointWorldDrawObject()
+        worldDrawComment.setDraw((currentPoint) => {
+            // 动态绘制three.js物体对象
+            // mxEllipse.endPoint = currentPoint
+            mxEllipse.point2 = currentPoint
+            worldDrawComment.drawCustomEntity(mxEllipse)
+        })
+        getPoint.setUserDraw(worldDrawComment)
+        getPoint.setMessage("\n再次点击结束绘制椭圆:")
+        await getPoint.go()
+        mxDraw.addMxEntity(mxEllipse)
+        drawings.push(mxEllipse)
+        if (!context.batch) {
+            context.drawing = false
+        }
+    } while (context.drawing)
+    return drawings
 }
 
 export async function DrawEclipseByObj(params) {

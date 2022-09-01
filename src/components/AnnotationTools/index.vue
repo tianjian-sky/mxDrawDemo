@@ -1,13 +1,13 @@
 <template>
     <div class="annotation-tools">
         <ul>
-            <li v-for="item in list" :class="{active: mode == item.id && annotationOn}" :key="item.id" @click="changeType(item.id)">{{item.name}}</li>
+            <li v-for="item in list" :class="{active: mode == item.id && annotationOn}" :key="item.id" @click.stop="changeType(item.id)">{{item.name}}</li>
         </ul>
         <ColorPciker v-model="color" ref="colorPciker" @input="updateColor" />
         <el-slider :step="1" v-model="lineWidth" height="100px" :max="5" :min="1" :vertical="true" @change="updateLineWidth"></el-slider>
         <el-checkbox v-model="batch" @change="handleBachDrawChange">批量绘制</el-checkbox>
         <div v-if="batch">
-            <el-button @click="confirmBatch">确认</el-button>
+            <el-button @click.stop="confirmBatch">确认</el-button>
         </div>
     </div>
 </template>
@@ -39,7 +39,8 @@ export default {
             if (val) {
                 this.$emit('postMessage', this.list.find(item => item.id === val).cmd, {
                     color: this.color,
-                    lineWidth: this.lineWidth
+                    lineWidth: this.lineWidth,
+                    batch: this.batch
                 })
             } else {
                 this.$emit('postMessage', 'Cbim_AnnotationClose')
@@ -59,6 +60,7 @@ export default {
         confirmBatch() {
             this.batch = false
             this.annotationOn = false
+            this.$emit('postMessage', 'Cbim_AnnotationBatchDrawComplete', this.batch)
         },
         handleBachDrawChange() {
             this.$emit('postMessage', 'Cbim_AnnotationBatchDrawChange', this.batch)

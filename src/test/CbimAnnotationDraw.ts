@@ -20,37 +20,35 @@ export class CbimAnnotationDraw {
 
     init() {
         this.mxfun.addCommand('Cbim_AnnotationArrow', async (args) => {
-            this.drawing = true
-            const obj = await DrawArrowLineByAction(args)
+            const obj = await DrawArrowLineByAction(args, this)
             this.currentDrawObj = obj
-            this.drawing = false
             console.log('draw obj', obj)
         })
         this.mxfun.addCommand('Cbim_AnnotationCloud', async (args) => {
-            this.drawing = true
-            const obj = await DrawCloudLineV2ByAction(args)
+            const obj = await DrawCloudLineV2ByAction(args, this)
             this.currentDrawObj = obj
-            this.drawing = false
             console.log('draw obj', obj)
 
         })
         this.mxfun.addCommand('Cbim_AnnotationRectangle', async (args) => {
-            this.drawing = true
-            const obj = await DrawRectByAction(args)
+            const obj = await DrawRectByAction(args, this)
             this.currentDrawObj = obj
-            this.drawing = false
             console.log('draw obj', obj)
         })
         this.mxfun.addCommand('Cbim_AnnotationEclipse', async (args) => {
-            this.drawing = true
-            const obj = await DrawEclipseByAction(args)
+            const obj = await DrawEclipseByAction(args, this)
             this.currentDrawObj = obj
-            this.drawing = false
             console.log('draw obj', obj)
         })
         this.mxfun.addCommand('Cbim_AnnotationClose', (args) => { console.warn(args) })
         this.mxfun.addCommand('Cbim_AnnotationColorChange', (args) => { console.warn(args) })
-        this.mxfun.addCommand('Cbim_AnnotationLineWidthChange', (args) => { console.warn(args) })
-        this.mxfun.addCommand('Cbim_AnnotationBatchDrawChange', (args) => { console.warn(args) })
+        this.mxfun.addCommand('Cbim_AnnotationLineWidthChange', (args) => { })
+        this.mxfun.addCommand('Cbim_AnnotationBatchDrawChange', (args) => {
+            this.batch = args
+        })
+        this.mxfun.addCommand('Cbim_AnnotationBatchDrawComplete', (args) => {
+            this.drawing = false
+            this.batch = false
+        })
     }
 }

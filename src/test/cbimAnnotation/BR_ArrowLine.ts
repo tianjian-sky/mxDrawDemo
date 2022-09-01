@@ -156,26 +156,34 @@ class CbimMxDbArrowLine extends MxDbEntity {
     }
 }
 
-export async function DrawArrowLineByAction(params) {
-    const point = new MrxDbgUiPrPoint()
-    const mxDraw = MxFun.getCurrentDraw()
-    const worldDrawComment = new McEdGetPointWorldDrawObject()
-    const ent = new CbimMxDbArrowLine({
-        lineWidth: params.lineWidth || 1,
-        color: params.color
-    })
-    point.setMessage("\n点击开始绘制椭圆:");
-    const pt1 = await point.go()
-    ent.startPoint = ent.endPoint = pt1
-    worldDrawComment.setDraw(currentPoint => {
-        ent.endPoint = currentPoint
-        worldDrawComment.drawCustomEntity(ent)
-    })
-    point.setUserDraw(worldDrawComment)
-    point.setMessage("\n再次点击结束绘制椭圆:");
-    await point.go()
-    mxDraw.addMxEntity(ent)
-    return ent
+export async function DrawArrowLineByAction(params, context) {
+    const drawings = []
+    context.drawing = true
+    do {
+        const point = new MrxDbgUiPrPoint()
+        const mxDraw = MxFun.getCurrentDraw()
+        const worldDrawComment = new McEdGetPointWorldDrawObject()
+        const ent = new CbimMxDbArrowLine({
+            lineWidth: params.lineWidth || 1,
+            color: params.color
+        })
+        point.setMessage("\n点击开始绘制椭圆:");
+        const pt1 = await point.go()
+        if (!pt1) break
+        ent.startPoint = ent.endPoint = pt1
+        worldDrawComment.setDraw(currentPoint => {
+            ent.endPoint = currentPoint
+            worldDrawComment.drawCustomEntity(ent)
+        })
+        point.setUserDraw(worldDrawComment)
+        point.setMessage("\n再次点击结束绘制椭圆:");
+        await point.go()
+        mxDraw.addMxEntity(ent)
+        if (!context.batch) {
+            context.drawing = false
+        }
+    } while (context.drawing)
+    return drawings
 }
 
 export async function DrawArrowLineByObj(params) {

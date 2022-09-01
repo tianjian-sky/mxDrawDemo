@@ -1,46 +1,17 @@
 <template>
     <div class="content">
-        <!-- <div class="left">
-      <div style="padding: 20px">
-        <h3>功能演示:</h3>
-        <ul>
-            <div v-for="(item, i) in list" :key="i">
-              <li @click="onClick(item, i)">
-                <span v-if="item.children && item.children.length > 0">></span
-                >{{ item.name }}
-              </li>
-              <ul
-                :style="
-                  currentItemIndex === i ? 'display: block' : 'display: none'
-                "
-              >
-                <li
-                  v-for="item1 in item.children"
-                  class="children-li"
-                  :key="item1.cmd"
-                  @click="onClick(item1)"
-                >
-                  {{ item1.name }}
-                </li>
-              </ul>
-            </div>
-        </ul>
-      </div>
-    </div> -->
-
-        <!-- <div  ><img src="" alt=""  id="test" style="width:800px;height:800px;border: 1px solid red"></div> -->
         <div id="mxdiv">
-            <TestMenu :data="list" @change="onClick" ref="testMenu">
+            <!-- <TestMenu :data="list" @change="onClick" ref="testMenu">
                 <template slot="top">
                     <h1 class="menu-title">
                         <img :src="logoImgUrl" alt="MxCad" /> 网页制图
                     </h1>
                 </template>
-            </TestMenu>
+            </TestMenu> -->
             <!-- <div class="layer_btn_box" @click="layerBtnClikc">
         <div class="iconfont icon-layers layer_btn"></div>
       </div> -->
-            <div class="sidebar-menu">
+            <!-- <div class="sidebar-menu">
                 <div class="menu-item" v-for="(item, index) in sidebarMenuData" :key="index" @click="layerBtnClikc(item)">
                     <img class="item-img" v-if="item.icon.indexOf('/') >= 0" :src="item.icon" />
                     <span v-else class="iconfont item-icon" :class="item.icon"></span>
@@ -48,7 +19,7 @@
                 </div>
                 <button @click="testSave">save</button>
                 <button @click="testSave2">save2</button>
-            </div>
+            </div> -->
             <SheetLayerSettingsWindow :list="sheetLayerSettingsData" :isShow="isShowLayerBox" @close="
           () => {
             isShowLayerBox = false;
@@ -60,6 +31,7 @@
             <ObjectActionBar :isShow="isShowObjectActionbar" />
             <canvas id="myCanvas" @mouseover.prevent="canvasMouseover" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
             <Annotation-tools @postMessage="handleAnnotationMessagePost"></Annotation-tools>
+            <Camera-tools :bg="bgImg" :viewport="currentViewport" @postMessage="handleAnnotationMessagePost"></Camera-tools>
         </div>
         <!-- 修改文字弹框 -->
         <el-dialog title="修改文字内容" :visible.sync="isShowTextDialog" :before-close="handleCloseTextDialog">
@@ -89,6 +61,7 @@ import { setSenceColor } from '@/test/systems/setSenceColor'
 import CoordinatePrompt from '@/components/CoordinatePrompt/CoordinatePrompt.vue'
 import ObjectActionBar from '@/components/ObjectActionBar/ObjectActionBar.vue'
 import AnnotationTools from '@/components/AnnotationTools'
+import CameraTools from '@/components/CameraTools'
 import mxvue from '@/mxvue'
 
 const win: any = window
@@ -99,6 +72,7 @@ const win: any = window
         ColorPciker,
         CoordinatePrompt,
         AnnotationTools,
+        CameraTools,
         ObjectActionBar
     }
 })
@@ -108,6 +82,19 @@ export default class Home extends Vue {
     color = '#ffffff'
     isShowObjectActionbar = false
     inputText = ''
+    bgImg = ''
+    vp = {
+        left: 0,
+        top: 0,
+        bottom: 0,
+        right: 0
+    }
+    currentViewport = {
+        left: 0,
+        top: 0,
+        bottom: 0,
+        right: 0
+    }
     isShowTextDialog = false
     // 当前选择的自定义对象
     currentEnt: any = null
@@ -465,10 +452,43 @@ export default class Home extends Vue {
                 //MxFun.showLayer(idLayer, isShow, false);
 
                 // 显示范围发送变化通知事件 。
-                mxDrawObject.addEvent('viewchange', () => {})
+                mxDrawObject.addEvent('viewchange', e => {
+                    console.log('viewchange', e)
+                    const br = [mxDrawObject.getViewWidth(), mxDrawObject.getViewHeight()]
+                    const p1 = mxDrawObject.screenCoord2World(ul[0], ul[1], 0)
+                    const p2 = mxDrawObject.screenCoord2World(br[0], br[1], 0)
+                    this.currentViewport.left = p1.x
+                    this.currentViewport.top = p1.y
+                    this.currentViewport.right = p2.x
+                    this.currentViewport.bottom = p2.y
+                })
+                mxDrawObject.addEvent('viewsizechange', e => {
+                    console.log('viewsizechange', e)
+                })
+                mxDrawObject.addEvent('MxEntitySelectChange', e => {
+                    console.log('MxEntitySelectChange', e)
+                })
 
-                mxDrawObject.addEvent('loadComplete', () => {
-                    console.log('mx loadComplete')
+                mxDrawObject.addEvent('loadComplete', e => {
+                    console.log('mx loadComplete', e)
+                    const canvas = mxDrawObject.getCanvas()
+                    this.bgImg = canvas.toDataURL('image/png', 1)
+                    canvas.toBlob(b => {
+                        this.bgImg = URL.createObjectURL(b)
+                    })
+                    console.log('canv', canvas, mxDrawObject)
+                    const ul = [0, 0]
+                    const br = [mxDrawObject.getViewWidth(), mxDrawObject.getViewHeight()]
+                    const p1 = mxDrawObject.screenCoord2World(ul[0], ul[1], 0)
+                    const p2 = mxDrawObject.screenCoord2World(br[0], br[1], 0)
+                    const p3 = mxDrawObject.screenCoord2Doc(ul[0], ul[1])
+                    const p4 = mxDrawObject.screenCoord2Doc(br[0], br[1])
+                    this.vp.left = p1.x
+                    this.vp.top = p1.y
+                    this.vp.right = p2.x
+                    this.vp.bottom = p2.y
+                    this.currentViewport = this.vp
+                    console.log(ul, br, p1, p2, p3, p4)
                 })
 
                 // 对象被选择的通知事件 。

@@ -71,42 +71,44 @@ class CbimMxDbRect extends MxDbEntity {
     }
 }
 
-export async function DrawRectByAction(params) {
-    console.log('DrawRectByAction', params)
-    const getPoint = new MrxDbgUiPrPoint();
-    getPoint.setMessage("\n指定第一点:");
-    let pt1: THREE.Vector3 | null = await getPoint.go();
-    if (!pt1) {
-        return;
-    }
-    let rect = new MxDbRect();
-    rect.pt1 = pt1;
+export async function DrawRectByAction(params, context) {
+    const drawings = []
+    context.drawing = true
+    do {
+        const getPoint = new MrxDbgUiPrPoint();
+        getPoint.setMessage("\n指定第一点:");
+        let pt1: THREE.Vector3 | null = await getPoint.go();
+        if (!pt1) break
+        let rect = new MxDbRect();
+        rect.pt1 = pt1;
 
-    // 在点取第二点时，设置动态绘制.
-    const worldDrawComment = new McEdGetPointWorldDrawObject();
-    worldDrawComment.setDraw((currentPoint: THREE.Vector3) => {
-        rect.pt2 = currentPoint;
-        worldDrawComment.drawCustomEntity(rect);
-    });
+        // 在点取第二点时，设置动态绘制.
+        const worldDrawComment = new McEdGetPointWorldDrawObject();
+        worldDrawComment.setDraw((currentPoint: THREE.Vector3) => {
+            rect.pt2 = currentPoint;
+            worldDrawComment.drawCustomEntity(rect);
+        });
 
-    getPoint.setBasePt(pt1);
-    getPoint.setUseBasePt(true);
+        getPoint.setBasePt(pt1);
+        getPoint.setUseBasePt(true);
 
-    getPoint.setUserDraw(worldDrawComment);
-    getPoint.setMessage("\n指定第二点:");
-
-    let pt2: THREE.Vector3 | null = await getPoint.go();
-    if (!pt2) {
-        return;
-    }
-    rect.pt2 = getPoint.value();
-    rect.setColor(params.color)
-    rect.isSolidColorFill = true;
-    rect.opacity = params.opacity || 0.5
-    rect.renderOrder = 5;
-    rect.setRadius(10);
-    MxFun.getCurrentDraw().addMxEntity(rect);
-    return rect
+        getPoint.setUserDraw(worldDrawComment);
+        getPoint.setMessage("\n指定第二点:");
+        let pt2: THREE.Vector3 | null = await getPoint.go();
+        if (!pt2) break
+        rect.pt2 = getPoint.value();
+        rect.setColor(params.color)
+        rect.isSolidColorFill = true;
+        rect.opacity = params.opacity || 0.5
+        rect.renderOrder = 5;
+        rect.setRadius(10);
+        MxFun.getCurrentDraw().addMxEntity(rect);
+        drawings.push(rect)
+        if (!context.batch) {
+            context.drawing = false
+        }
+    } while (context.drawing)
+    return drawings
 }
 
 export async function DrawRectByObj(params) {

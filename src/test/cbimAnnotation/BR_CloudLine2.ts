@@ -47,31 +47,39 @@ class CbimMxDbCloudLine extends MxDbEntity {
     }
 }
 
-export async function DrawCloudLineV2ByAction(params) {
-    const point = new MrxDbgUiPrPoint()
-    const mxDraw = MxFun.getCurrentDraw()
-    const worldDrawComment = new McEdGetPointWorldDrawObject()
+export async function DrawCloudLineV2ByAction(params, context) {
+    const drawings = []
+    context.drawing = true
     // 屏幕坐标半径
-    const radius = MxFun.screenCoordLong2Doc(params.radius || 16)
-    point.setMessage("\n点击开启绘制云线:")
-    let pt = await point.go()
-    const mxCloudLine = new MxDbCloudLine()
-    mxCloudLine.setLineWidth(params.linewidth)
-    mxCloudLine.setColor(params.color)
-    mxCloudLine.setRadius(radius)
-    mxCloudLine.addPoint(pt)
-    worldDrawComment.setDraw(currentPoint => {
-        if (pt.distanceTo(currentPoint) > radius) {
-            pt = currentPoint.clone()
-            mxCloudLine.addPoint(currentPoint, true)
+    do {
+        const point = new MrxDbgUiPrPoint()
+        const mxDraw = MxFun.getCurrentDraw()
+        const worldDrawComment = new McEdGetPointWorldDrawObject()
+        const radius = MxFun.screenCoordLong2Doc(params.radius || 16)
+        point.setMessage("\n点击开启绘制云线:")
+        let pt = await point.go()
+        if (!pt) break
+        const mxCloudLine = new MxDbCloudLine()
+        mxCloudLine.setLineWidth(params.linewidth)
+        mxCloudLine.setColor(params.color)
+        mxCloudLine.setRadius(radius)
+        mxCloudLine.addPoint(pt)
+        worldDrawComment.setDraw(currentPoint => {
+            if (pt.distanceTo(currentPoint) > radius) {
+                pt = currentPoint.clone()
+                mxCloudLine.addPoint(currentPoint, true)
+            }
+            worldDrawComment.drawCustomEntity(mxCloudLine)
+        })
+        point.setUserDraw(worldDrawComment)
+        point.setMessage("\n再次点击结束绘制云线:");
+        await point.go()
+        mxDraw.addMxEntity(mxCloudLine)
+        if (!context.batch) {
+            context.drawing = false
         }
-        worldDrawComment.drawCustomEntity(mxCloudLine)
-    })
-    point.setUserDraw(worldDrawComment)
-    point.setMessage("\n再次点击结束绘制云线:");
-    await point.go()
-    mxDraw.addMxEntity(mxCloudLine)
-    return mxCloudLine
+    } while (context.drawing)
+    return drawings
 }
 
 export async function DrawCloudLineV2ByObj(params) {

@@ -34,7 +34,7 @@ import {
 } from "./DrawImage";
 
 import { CbimAnnotationDraw } from './CbimAnnotationDraw'
-
+import { CbimAnnotationCamera } from './CbimAnnotationCamera'
 
 import { Mx_DrawRect } from "./DrawRect";
 import BR_SplineCurve from "./Objects/BR_SplineCurve";
@@ -498,6 +498,7 @@ export function init() {
     MxFun.addCommand("BR_LeadTag", BR_LeadTag);
 
     new CbimAnnotationDraw(MxFun).init()
+    new CbimAnnotationCamera(MxFun).init()
 
     SampleDrawCommand.init();
 }
