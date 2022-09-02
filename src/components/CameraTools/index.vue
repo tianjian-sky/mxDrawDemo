@@ -1,7 +1,7 @@
 <template>
     <div class="camera-tools">
         <div class="bg" :style="{backgroundImage: `url(${bg})`, width: width + 'px', height: height + 'px'}">
-            <div ref="mask" class="mask" @mousedown.stop="handleMouseDown" :style="{left: `${mask.left}px`, top: `${mask.top}px`, width: `${mask.width}px`, height: `${mask.height}px`}"></div>
+            <div ref="mask" class="mask" @mousewheel="handleMouseWheel" @mousedown.stop="handleMouseDown" :style="{left: `${mask.left}px`, top: `${mask.top}px`, width: `${mask.width}px`, height: `${mask.height}px`}"></div>
         </div>
         <div class="buttons">
             <a @click="zoomIn">+</a>
@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import { MxFun } from 'mxdraw'
 import ColorPciker from '@/components/ColorPciker/ColorPciker.vue'
 
 const _getDist = function (p1, p2) {
@@ -29,11 +30,12 @@ export default {
     name: 'AnnotationTools',
     emit: ['postMessage'],
     components: { ColorPciker },
-    props: ['bg', 'viewer', 'viewport'],
+    props: ['bg', 'viewer', 'mxfun', 'viewport'],
     data() {
         return {
             width: 200,
             height: 100,
+            listenViewerChange: true,
             mask: {
                 left: 0,
                 top: 0,
@@ -68,20 +70,56 @@ export default {
         handleMouseDown(e) {
             let startX = e.clientX
             let startY = e.clientY
+            this.listenViewerChange = false
             const _mm = e => {
                 const curX = e.clientX
                 const curY = e.clientY
-                this.mask.left += curX - startX
-                this.mask.top += curY - startY
+                const dx = curX - startX
+                const dy = curY - startY
+                this.mask.left += dx
+                this.mask.top += dy
                 startX = curX
                 startY = curY
+                const p1 = this.viewer.screenCoord2World((dx / this.mask.width) * this.viewer.getViewWidth(), (dy / this.mask.height) * this.viewer.getViewHeight(), 0)
+                const p2 = this.viewer.screenCoord2World(((dx + this.mask.width) / this.mask.width) * this.viewer.getViewWidth(), ((dy + this.mask.height) / this.mask.height) * this.viewer.getViewHeight(), 0)
+                MxFun.getCurrentDraw().zoomW(p1, p2, true)
             }
             const _mup = e => {
                 this.$refs.mask.removeEventListener('mousemove', _mm)
                 this.$refs.mask.removeEventListener('mouseup', _mup)
+                this.listenViewerChange = true
             }
             this.$refs.mask.addEventListener('mousemove', _mm)
             this.$refs.mask.addEventListener('mouseup', _mup)
+        },
+        handleMouseWheel(e) {
+            const delta = e.wheelDelta
+            const bound = e.target.getBoundingClientRect()
+            const center = { x: e.clientX - bound.left, y: e.clientY - bound.top, z: 0 }
+            const rate = delta < 0 ? 1.1 : 0.9
+            const zoomCenter = {
+                x: (center.x * this.viewer.getViewWidth()) / this.mask.width,
+                y: (center.y * this.viewer.getViewHeight()) / this.mask.height
+            }
+            const v1 = {
+                x: 0,
+                y: 0
+            }
+            const v2 = {
+                x: this.viewer.getViewWidth(),
+                y: this.viewer.getViewHeight()
+            }
+            const v12 = {
+                x: rate * v1.x + zoomCenter.x * (1 - rate),
+                y: rate * v1.y + zoomCenter.y * (1 - rate)
+            }
+            const v22 = {
+                x: rate * v2.x + zoomCenter.x * (1 - rate),
+                y: rate * v2.y + zoomCenter.y * (1 - rate)
+            }
+            const p1 = this.viewer.screenCoord2World(v12.x, v12.y, 0)
+            const p2 = this.viewer.screenCoord2World(v22.x, v22.y, 0)
+            MxFun.getCurrentDraw().zoomW(p1, p2, true)
         },
         zoomIn() {
             this.$emit('postMessage', 'Cbim_DrawingCameraZoom', 1.1)
@@ -103,8 +141,12 @@ export default {
         },
         reset() {
             this.$emit('postMessage', 'Cbim_DrawingCameraReset')
+            this.$nextTick(() => {
+                this.handleViewChange()
+            })
         },
         handleViewChange() {
+            if (!this.listenViewerChange) return
             const canvasWidth = this.viewer.getViewWidth()
             const canvasHeight = this.viewer.getViewHeight()
             const ul = [0, 0]
