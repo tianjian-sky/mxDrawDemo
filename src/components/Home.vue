@@ -31,7 +31,7 @@
             <ObjectActionBar :isShow="isShowObjectActionbar" />
             <canvas id="myCanvas" @mouseover.prevent="canvasMouseover" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
             <Annotation-tools @postMessage="handleAnnotationMessagePost"></Annotation-tools>
-            <Camera-tools :bg="bgImg" :viewport="currentViewport" @postMessage="handleAnnotationMessagePost"></Camera-tools>
+            <Camera-tools :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
         </div>
         <!-- 修改文字弹框 -->
         <el-dialog title="修改文字内容" :visible.sync="isShowTextDialog" :before-close="handleCloseTextDialog">
@@ -83,18 +83,8 @@ export default class Home extends Vue {
     isShowObjectActionbar = false
     inputText = ''
     bgImg = ''
-    vp = {
-        left: 0,
-        top: 0,
-        bottom: 0,
-        right: 0
-    }
-    currentViewport = {
-        left: 0,
-        top: 0,
-        bottom: 0,
-        right: 0
-    }
+    vp = null
+    viewer = null
     isShowTextDialog = false
     // 当前选择的自定义对象
     currentEnt: any = null
@@ -436,6 +426,7 @@ export default class Home extends Vue {
             isMxCAD: false,
             useWebsocket: false,
             callback: (mxDrawObject, { canvas, canvasParent }) => {
+                this.viewer = mxDrawObject
                 canvasParent.className = 'mxdiv'
                 // mxDrawObject.initRunMode(2)
                 // 用于屏幕截图，启用three.js 绘图缓冲,不用截图，可以禁用该功能。
@@ -451,17 +442,6 @@ export default class Home extends Vue {
 
                 //MxFun.showLayer(idLayer, isShow, false);
 
-                // 显示范围发送变化通知事件 。
-                mxDrawObject.addEvent('viewchange', e => {
-                    console.log('viewchange', e)
-                    const br = [mxDrawObject.getViewWidth(), mxDrawObject.getViewHeight()]
-                    const p1 = mxDrawObject.screenCoord2World(ul[0], ul[1], 0)
-                    const p2 = mxDrawObject.screenCoord2World(br[0], br[1], 0)
-                    this.currentViewport.left = p1.x
-                    this.currentViewport.top = p1.y
-                    this.currentViewport.right = p2.x
-                    this.currentViewport.bottom = p2.y
-                })
                 mxDrawObject.addEvent('viewsizechange', e => {
                     console.log('viewsizechange', e)
                 })
@@ -481,14 +461,12 @@ export default class Home extends Vue {
                     const br = [mxDrawObject.getViewWidth(), mxDrawObject.getViewHeight()]
                     const p1 = mxDrawObject.screenCoord2World(ul[0], ul[1], 0)
                     const p2 = mxDrawObject.screenCoord2World(br[0], br[1], 0)
-                    const p3 = mxDrawObject.screenCoord2Doc(ul[0], ul[1])
-                    const p4 = mxDrawObject.screenCoord2Doc(br[0], br[1])
-                    this.vp.left = p1.x
-                    this.vp.top = p1.y
-                    this.vp.right = p2.x
-                    this.vp.bottom = p2.y
-                    this.currentViewport = this.vp
-                    console.log(ul, br, p1, p2, p3, p4)
+                    this.vp = {
+                        left: p1.x,
+                        top: p1.y,
+                        right: p2.x,
+                        bottom: p2.y
+                    }
                 })
 
                 // 对象被选择的通知事件 。
