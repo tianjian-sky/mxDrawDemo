@@ -76,38 +76,42 @@ class CbimMxDbArrowLine extends MxDbEntity {
         this.opacity = params.opacity || 0.5
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
-        const lineWidth = this.getLineWidth()
-        const color = this.getColor()
-        let angle = computeAngle2(this.endPoint.x, this.endPoint.y, this.startPoint.x, this.startPoint.y)
-        // 距离
-        const dist = Math.sqrt(Math.pow(this.startPoint.x - this.endPoint.x) + Math.pow(this.startPoint.y - this.endPoint.y))
-        let arrowLen = this.markNumberRadius * (1 + (lineWidth - 1) / 10)
-        let theta = 40
-        let angle1 = (angle + theta) * Math.PI / 180 //角a2
-        let angle2 = (angle - theta) * Math.PI / 180 //角a1
-        let topX = arrowLen * Math.cos(angle1) //上箭头初始位置y坐标
-        let topY = arrowLen * Math.sin(angle1)
-        let botX = arrowLen * Math.cos(angle2) //下箭头初始位置x坐标
-        let botY = arrowLen * Math.sin(angle2)
-        // 材质
-        let material = new LineMaterial({
-            color,
-            linewidth: lineWidth
-        })
-        // 防止线宽过宽
-        material.resolution.set(window.innerWidth, window.innerHeight)
-        let pointStart = new Vector3(this.startPoint.x, this.startPoint.y, 0)
-        let pointEnd = new Vector3(this.endPoint.x, this.endPoint.y, 0)
-        let pointStart1 = new Vector3(this.startPoint.x + topX, this.startPoint.y + topY, 0)
-        let pointStart2 = new Vector3(this.startPoint.x + botX, this.startPoint.y + botY, 0)
-        let triangle = _drawTriangle(pointStart1, pointStart, pointStart2, color)
-        let geometry = new LineGeometry()
-        let lineStartPoint = new Vector3(this.startPoint.x + (topX + botX) / 2, this.startPoint.y + (topY + botY) / 2, 0)
-        geometry.setPositions(_transCoordArr([lineStartPoint, pointEnd]))
-        let line = new Line2(geometry, material)
-        let group = new Group()
-        group.add(line, triangle)
-        pWorldDraw.drawEntity(group)
+        if (this.startPoint.x != this.endPoint.x && this.startPoint.y != this.endPoint.y) {
+            const lineWidth = this.getLineWidth()
+            const color = this.getColor()
+            let angle = Math.atan2(this.endPoint.y - this.startPoint.y, this.endPoint.x - this.startPoint.x)
+            // 距离
+            const dist = Math.sqrt(Math.pow(this.startPoint.x - this.endPoint.x, 2) + Math.pow(this.startPoint.y - this.endPoint.y, 2))
+            let arrowLen = dist / 10
+            const foot = new Vector3(this.startPoint.x + arrowLen * Math.cos(angle), this.startPoint.y + arrowLen * Math.sin(angle), 0)
+            const theta = 20 * Math.PI / 180
+            const pointStart1 = new Vector3(
+                foot.x * Math.cos(-theta) - foot.y * Math.sin(-theta) - this.startPoint.x * Math.cos(-theta) + this.startPoint.y * Math.sin(-theta) + this.startPoint.x,
+                foot.x * Math.sin(-theta) + foot.y * Math.cos(-theta) - this.startPoint.x * Math.sin(-theta) - this.startPoint.y * Math.cos(-theta) + this.startPoint.y,
+                0
+            )
+            const pointStart2 = new Vector3(
+                foot.x * Math.cos(theta) - foot.y * Math.sin(theta) - this.startPoint.x * Math.cos(theta) + this.startPoint.y * Math.sin(theta) + this.startPoint.x,
+                foot.x * Math.sin(theta) + foot.y * Math.cos(theta) - this.startPoint.x * Math.sin(theta) - this.startPoint.y * Math.cos(theta) + this.startPoint.y,
+                0
+            )
+            // 材质
+            let material = new LineMaterial({
+                color,
+                linewidth: lineWidth
+            })
+            // 防止线宽过宽
+            material.resolution.set(window.innerWidth, window.innerHeight)
+            let pointStart = new Vector3(this.startPoint.x, this.startPoint.y, 0)
+            let pointEnd = new Vector3(this.endPoint.x, this.endPoint.y, 0)
+            let triangle = _drawTriangle(pointStart, pointStart1, pointStart2, color)
+            let geometry = new LineGeometry()
+            geometry.setPositions(_transCoordArr([foot, pointEnd]))
+            let line = new Line2(geometry, material)
+            let group = new Group()
+            group.add(line, triangle)
+            pWorldDraw.drawEntity(group)
+        }
     }
 
     getGripPoints(): Vector3[] {
