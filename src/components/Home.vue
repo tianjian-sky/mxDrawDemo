@@ -32,6 +32,7 @@
             <canvas id="myCanvas" @mouseover.prevent="canvasMouseover" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
             <Annotation-tools @postMessage="handleAnnotationMessagePost"></Annotation-tools>
             <Camera-tools :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
+            <Measure-Tools @postMessage="handleAnnotationMessagePost"></Measure-Tools>
         </div>
         <!-- 修改文字弹框 -->
         <el-dialog title="修改文字内容" :visible.sync="isShowTextDialog" :before-close="handleCloseTextDialog">
@@ -61,6 +62,7 @@ import { setSenceColor } from '@/test/systems/setSenceColor'
 import CoordinatePrompt from '@/components/CoordinatePrompt/CoordinatePrompt.vue'
 import ObjectActionBar from '@/components/ObjectActionBar/ObjectActionBar.vue'
 import AnnotationTools from '@/components/AnnotationTools'
+import MeasureTools from '@/components/MeasureTools'
 import CameraTools from '@/components/CameraTools'
 import mxvue from '@/mxvue'
 
@@ -73,6 +75,7 @@ const win: any = window
         CoordinatePrompt,
         AnnotationTools,
         CameraTools,
+        MeasureTools,
         ObjectActionBar
     }
 })
