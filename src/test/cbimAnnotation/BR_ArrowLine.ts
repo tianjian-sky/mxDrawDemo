@@ -92,17 +92,10 @@ class CbimMxDbArrowLine extends MxDbEntity {
         // 材质
         let material = new LineMaterial({
             color,
-            lineWidth
-        })
-        let material1 = new LineMaterial({
-            color,
-            lineWidth,
-            transparent: true,
-            opacity: this.opacity
+            linewidth: lineWidth
         })
         // 防止线宽过宽
         material.resolution.set(window.innerWidth, window.innerHeight)
-        material1.resolution.set(window.innerWidth, window.innerHeight)
         let pointStart = new Vector3(this.startPoint.x, this.startPoint.y, 0)
         let pointEnd = new Vector3(this.endPoint.x, this.endPoint.y, 0)
         let pointStart1 = new Vector3(this.startPoint.x + topX, this.startPoint.y + topY, 0)
