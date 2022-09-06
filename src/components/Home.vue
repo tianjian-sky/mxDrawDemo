@@ -8,10 +8,10 @@
                     </h1>
                 </template>
             </TestMenu> -->
-            <!-- <div class="layer_btn_box" @click="layerBtnClikc">
-        <div class="iconfont icon-layers layer_btn"></div>
-      </div> -->
-            <!-- <div class="sidebar-menu">
+            <div class="layer_btn_box" @click="layerBtnClikc">
+                <div class="iconfont icon-layers layer_btn"></div>
+            </div>
+            <div class="sidebar-menu">
                 <div class="menu-item" v-for="(item, index) in sidebarMenuData" :key="index" @click="layerBtnClikc(item)">
                     <img class="item-img" v-if="item.icon.indexOf('/') >= 0" :src="item.icon" />
                     <span v-else class="iconfont item-icon" :class="item.icon"></span>
@@ -19,13 +19,16 @@
                 </div>
                 <button @click="testSave">save</button>
                 <button @click="testSave2">save2</button>
-            </div> -->
+            </div>
             <SheetLayerSettingsWindow :list="sheetLayerSettingsData" :isShow="isShowLayerBox" @close="
           () => {
             isShowLayerBox = false;
           }
         " />
-            <ColorPciker v-model="color" ref="colorPciker" @input="updateColor" />
+            <SheetLayoutSettingsWindow :viewer="viewer" :list="sheetLayoutSettingsData" :isShow="isShowLayoutBox" :currentSpace="currentSpace" @close="() => {
+            isShowLayoutBox = false;
+          }" @changeLayout=" (layout)=> handleChangeLayout(layout)" />
+            <ColorPciker v-model=" color" ref="colorPciker" @input="updateColor" />
             <div id="myChart"></div>
             <CoordinatePrompt />
             <ObjectActionBar :isShow="isShowObjectActionbar" />
@@ -52,6 +55,7 @@ import { MxFun } from 'mxdraw'
 // import { MxFun } from './mxfun'
 import { RegistMxCommands, RxInitMxEntity } from '@/test/command'
 import SheetLayerSettingsWindow, { LayerItemType } from '@/components/SheetLayerSettingsWindow/SheetLayerSettingsWindow.vue'
+import SheetLayoutSettingsWindow, { LayoutItemType } from '@/components/SheetLayoutSettingsWindow/SheetLayoutSettingsWindow.vue'
 import TestMenu, { MenuItemType } from '@/components/TestMenu/TestMenu.vue'
 import ColorPciker from '@/components/ColorPciker/ColorPciker.vue'
 import { layout as layoutIcon, layer as layerIcon } from '@/assets/img/menuIcon'
@@ -66,10 +70,20 @@ import MeasureTools from '@/components/MeasureTools'
 import CameraTools from '@/components/CameraTools'
 import mxvue from '@/mxvue'
 
+const FILES = ['/demo/buf/fjdy.dwg', '/demo/buf/a.dwg', '/demo/buf/b.dwg', '/demo/buf/c.dwg', '/demo/buf/hhhh.dwg', '/demo/buf/test2.dwg']
+const LAYOUTS = {
+    '/demo/buf/fjdy.dwg': ['Model', 'Layout1', 'Layout2'],
+    '/demo/buf/a.dwg': ['Model', 'Layout1', 'Layout2'],
+    '/demo/buf/b.dwg': ['Model', 'Layout1', 'Layout2'],
+    '/demo/buf/c.dwg': ['Model', 'Layout1', 'Layout2'],
+    '/demo/buf/hhhh.dwg': ['Model', 'Layout1', 'Layout2'],
+    '/demo/buf/test2.dwg': ['Model', 'Layout1']
+}
 const win: any = window
 @Component({
     components: {
         SheetLayerSettingsWindow,
+        SheetLayoutSettingsWindow,
         TestMenu,
         ColorPciker,
         CoordinatePrompt,
@@ -91,6 +105,8 @@ export default class Home extends Vue {
     isShowTextDialog = false
     // 当前选择的自定义对象
     currentEnt: any = null
+    currentSpace = 'Model'
+    fileUrl = '/demo/buf/a.dwg'
     sidebarMenuData = [
         {
             icon: layerIcon,
@@ -391,7 +407,9 @@ export default class Home extends Vue {
     ]
     currentItemIndex = -1
     isShowLayerBox = false
+    isShowLayoutBox = false
     sheetLayerSettingsData: Array<LayerItemType> = []
+    sheetLayoutSettingsData: Array<LayoutItemType> = []
 
     mounted() {
         //MxFun.setMxServer("ws://localhost:5090");
@@ -423,13 +441,14 @@ export default class Home extends Vue {
             //cadFile: "http://localhost:8088/demo/buf/hhhh.dwg",
             //cadFile: "/demo/buf/$hhhh.dwg.mxb1.wgh",
             // cadFile: '/demo/buf/hhhh.dwg',
-            cadFile: '/demo/buf/a.dwg',
+            cadFile: this.fileUrl,
             //cadFile: "/demo/buf/aaa.dwg",
             //cadFile: aryStaticFile,
             isMxCAD: false,
             useWebsocket: false,
             callback: (mxDrawObject, { canvas, canvasParent }) => {
                 this.viewer = mxDrawObject
+                this.sheetLayoutSettingsData = LAYOUTS[this.fileUrl]
                 canvasParent.className = 'mxdiv'
                 // mxDrawObject.initRunMode(2)
                 // 用于屏幕截图，启用three.js 绘图缓冲,不用截图，可以禁用该功能。
@@ -555,7 +574,10 @@ export default class Home extends Vue {
     layerBtnClikc(item: any) {
         switch (item.cmd) {
             case 'layer':
-                this.isShowLayerBox = true
+                this.isShowLayerBox = !this.isShowLayerBox
+                break
+            case 'layout':
+                this.isShowLayoutBox = !this.isShowLayoutBox
                 break
         }
     }
@@ -577,6 +599,14 @@ export default class Home extends Vue {
     }
     testSave2() {
         MxFun.sendStringToExecute('BR_Save')
+    }
+    handleChangeLayout(layout: String) {
+        const fileUrl = this.fileUrl.replace(/\./, function () {
+            if (layout === 'Model') return '.'
+            else return `#${layout}#.`
+        })
+        this.currentSpace = layout
+        MxFun.openFile(fileUrl)
     }
 }
 </script>

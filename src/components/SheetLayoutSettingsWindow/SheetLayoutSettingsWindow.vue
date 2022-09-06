@@ -1,5 +1,6 @@
 <template>
     <div class="sheet_layout_settings_window" v-show="isShow">
+        {{currentSpace}}
         <div class="sheet_layout_settings_window_header" @mousedown="onMousedown">
             <span class="sheet_layer-settings_window-header_title">图纸空间</span>
             <div class="bf-close" @click="closeBox"></div>
@@ -10,13 +11,8 @@
             </div>
         </div>
         <div class="sheet_layout_settings_window_header_table_main sheet_layout_settings_window_container">
-            <div class="sheet_layout_settings_window_header_table_tr" v-for="item in list" :key="item.id">
-                <div class="sheet_layout_settings_window_header_table_td flex_basis_50 iconfont" :class="item.off === 0 ? 'icon-xianshikejian': 'icon-yincangbukejian'" @click="onClickIsVisible(item)"></div>
-                <div class="sheet_layout_settings_window_header_table_td flex_basis_50">
-                    <div class="color_box" :style="'background-color: ' + item.color"></div>
-                </div>
-                <div class="sheet_layout_settings_window_header_table_td flex_basis_auto">{{ item.name }}</div>
-                <div class="sheet_layout_settings_window_header_table_td flex_basis_50 iconfont" :class="true ? 'icon-jiesuo': 'icon-suoding'" @click="onClickState(item)"></div>
+            <div class="sheet_layout_settings_window_header_table_tr" :class="[item === currentSpace ? 'active' : '']" v-for="item in list" :key="item" @click="changeLayout(item)">
+                <div class="sheet_layout_settings_window_header_table_td flex_basis_auto">{{ item }}</div>
             </div>
         </div>
     </div>
@@ -37,6 +33,10 @@ const win: any = window
 })
 export default class SheetLayoutSettingsWindow extends Vue {
     @Prop({
+        type: String
+    })
+    currentSpace: String = ''
+    @Prop({
         type: Boolean,
         default: false
     })
@@ -48,11 +48,6 @@ export default class SheetLayoutSettingsWindow extends Vue {
                 name: '名称',
                 type: 'name',
                 className: 'flex_basis_auto'
-            },
-            {
-                name: '状态',
-                type: 'state',
-                className: 'flex_basis_50'
             }
         ]
     })
@@ -67,6 +62,9 @@ export default class SheetLayoutSettingsWindow extends Vue {
     }
 
     onClickState(item: LayoutItemType) {}
+    changeLayout(layout) {
+        this.$emit('changeLayout', layout)
+    }
     closeBox() {
         this.$emit('close')
     }
@@ -219,6 +217,10 @@ export default class SheetLayoutSettingsWindow extends Vue {
     box-sizing: border-box;
     background-color: rgba(85, 85, 85, 0.45);
     align-items: center;
+    cursor: pointer;
+}
+.sheet_layout_settings_window_header_table_tr.active {
+    /* color: aqua; */
 }
 .sheet_layout_settings_window_header_table_td {
     display: flex;
