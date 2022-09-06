@@ -6,6 +6,7 @@
 import { DrawRectByAction } from './cbimAnnotation/BR_Rectangle'
 import { DrawEclipseByAction } from './cbimAnnotation/BR_Ellipse'
 import { DrawCloudLineV2ByAction } from './cbimAnnotation/BR_CloudLine2'
+import { DrawCloudLineByAction } from './cbimAnnotation/BR_CloudLine'
 import { DrawArrowLineByAction } from './cbimAnnotation/BR_ArrowLine'
 
 export class CbimAnnotationDraw {
@@ -24,7 +25,13 @@ export class CbimAnnotationDraw {
             this.currentDrawObj = obj
             console.log('draw obj', obj)
         })
-        this.mxfun.addCommand('Cbim_AnnotationCloud', async (args) => {
+        this.mxfun.addCommand('Cbim_AnnotationCloudV1', async (args) => {
+            const obj = await DrawCloudLineByAction(args, this)
+            this.currentDrawObj = obj
+            console.log('draw obj', obj)
+
+        })
+        this.mxfun.addCommand('Cbim_AnnotationCloudV2', async (args) => {
             const obj = await DrawCloudLineV2ByAction(args, this)
             this.currentDrawObj = obj
             console.log('draw obj', obj)

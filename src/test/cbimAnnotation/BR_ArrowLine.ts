@@ -4,50 +4,6 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
 
-function computeAngle2(px, py, mx, my) {
-    var x = Math.abs(px - mx)
-    var y = Math.abs(py - my)
-    var z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
-    var sin = y / z
-    //用反三角函数求弧度
-    var radina = Math.asin(sin)
-    //将弧度转换成角度
-    var angle = Math.floor(180 / (Math.PI / radina))
-    //鼠标在x轴正方向上
-    if (mx < px && my == py) {
-        angle = 0
-    }
-    //鼠标在x轴负方向
-    else if (mx > px && my == py) {
-        angle = 180
-    }
-    //鼠标在y轴正方向上
-    else if (mx == px && my < py) {
-        angle = 90
-    }
-    //鼠标在y轴负方向上
-    else if (mx == px && my > py) {
-        angle = 270
-    }
-    //鼠标在第一象限
-    else if (mx > px && my < py) {
-        angle = 180 - angle
-    }
-    //鼠标在第二象限
-    else if (mx < px && my < py) {
-        angle = angle
-    }
-    //鼠标在第三象限
-    else if (mx < px && my > py) {
-        angle = 360 - angle
-    }
-    //鼠标在第四象限
-    else if (mx > px && my > py) {
-        angle = 180 + angle
-    }
-    return angle
-}
-
 function _drawTriangle(p0, p1, p2, color) {
     let geometry = new Geometry()
     geometry.vertices.push(p0, p1, p2)

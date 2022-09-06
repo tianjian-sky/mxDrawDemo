@@ -26,9 +26,10 @@ export default {
             color: '#ff0000',
             list: [
                 { id: 1, name: '箭头', cmd: 'Cbim_AnnotationArrow' },
-                { id: 2, name: '云线', cmd: 'Cbim_AnnotationCloud' },
-                { id: 3, name: '矩形', cmd: 'Cbim_AnnotationRectangle' },
-                { id: 4, name: '椭圆', cmd: 'Cbim_AnnotationEclipse' }
+                { id: 2, name: '云线', cmd: 'Cbim_AnnotationCloudV1' },
+                { id: 3, name: '云线2', cmd: 'Cbim_AnnotationCloudV2' },
+                { id: 4, name: '矩形', cmd: 'Cbim_AnnotationRectangle' },
+                { id: 5, name: '椭圆', cmd: 'Cbim_AnnotationEclipse' }
             ],
             lineWidth: 1,
             batch: false
