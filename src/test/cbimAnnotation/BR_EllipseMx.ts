@@ -34,119 +34,109 @@ const getBezierCurvePoint = function (data, sign) {
     return points
 }
 
-function ellipseLine(px, py, mx, my, bezierCurveCircle, bezierCurveArr) {
-    // 上
-    let up = {}
-    up.startPoint = {
-        x: px,
-        y: (py + my) / 2,
-        z: 0
-    }
-    up.endPoint = {
-        x: mx,
-        y: (py + my) / 2,
-        z: 0
-    }
-    up.firstControlPoint = {
-        x: px,
-        y: py + (py - my) / bezierCurveCircle,
-        z: 0
-    }
-    up.secondControlPoint = {
-        x: mx,
-        y: py + (py - my) / bezierCurveCircle,
-        z: 0
-    }
-    bezierCurveArr.push(up)
-    // 下
-    let down = {}
-    down.startPoint = {
-        x: mx,
-        y: (py + my) / 2,
-        z: 0
-    }
-    down.endPoint = {
-        x: px,
-        y: (py + my) / 2,
-        z: 0
-    }
-    down.firstControlPoint = {
-        x: mx,
-        y: my - (py - my) / bezierCurveCircle,
-        z: 0
-    }
-    down.secondControlPoint = {
-        x: px,
-        y: my - (py - my) / bezierCurveCircle,
-        z: 0
-    }
-    bezierCurveArr.push(down)
-}
-
 class CbimMxDbEclipse extends MxDbEntity {
-    pointStart = new Vector3()
-    pointEnd = new Vector3()
-    bezierCurveCircle = 6 // 贝塞尔曲线绘制内切圆的时候两个控制点超出的高度系数
+    startPoint = new Vector3()
+    endPoint = new Vector3()
+    markNumberRadius = 2
+    bezierCurveCircle = 6		// 贝塞尔曲线绘制内切圆的时候两个控制点超出的高度系数
     constructor(params) {
         super(params)
-        if (params.pointStart) {
-            this.pointStart = params.pointStart
-        }
-        if (params.pointEnd) {
-            this.pointEnd = params.pointEnd
-        }
-        if (params.color) {
-            this.setColor(params.color)
-        }
-        if (params.lineWidth) {
-            this.setLineWidth(params.lineWidth)
-        }
-        if (params.bezierCurveCircle) {
-            this.bezierCurveCircle = params.bezierCurveCircle
-        } else {
-            this.bezierCurveCircle = MxFun.screenCoordLong2Doc(6)
-        }
+        this.setColor(params.color)
+        this.setLineWidth(params.lineWidth)
+        this.opacity = params.opacity || 0.5
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
         // 绘制矩形框
+        const startPoint = this.startPoint
+        const endPoint = this.endPoint
+        const color = this.color
+        const lineWidth = this.getLineWidth()
         let pointData = []
         // 清空之前的所有顶点
-        const bezierCurveArr = []
+        let bezierCurveArr = []
         // start代表的是左上角，end代表的是右下角
-        let startX = this.pointStart.x
-        let startY = this.pointStart.y
-        let endX = this.pointEnd.x
-        let endY = this.pointEnd.y
-        if (startX > endX) {
-            const temp = startX
-            startX = endX
-            endX = temp
+        let startX = startPoint.x
+        let startY = startPoint.y
+        let endX = endPoint.x
+        let endY = endPoint.y
+        if (startPoint.x < endPoint.x) {
+            startX = startPoint.x
+            endX = endPoint.x
+        } else {
+            startX = endPoint.x
+            endX = startPoint.x
         }
-        if (startY < endY) {
-            const temp = startY
-            startY = endY
-            endY = temp
+        if (startPoint.y > endPoint.y) {
+            startY = startPoint.y
+            endY = endPoint.y
+        } else {
+            startY = endPoint.y
+            endY = startPoint.y
         }
-        ellipseLine(startX, startY, endX, endY, this.bezierCurveCircle, bezierCurveArr)
+        const ellipseLine = (px, py, mx, my) => {
+            // 上
+            let up = {}
+            up.startPoint = {
+                x: px,
+                y: (py + my) / 2,
+                z: 0
+            }
+            up.endPoint = {
+                x: mx,
+                y: (py + my) / 2,
+                z: 0
+            }
+            up.firstControlPoint = {
+                x: px,
+                y: py + (py - my) / this.bezierCurveCircle,
+                z: 0
+            }
+            up.secondControlPoint = {
+                x: mx,
+                y: py + (py - my) / this.bezierCurveCircle,
+                z: 0
+            }
+            bezierCurveArr.push(up)
+            // 下
+            let down = {}
+            down.startPoint = {
+                x: mx,
+                y: (py + my) / 2,
+                z: 0
+            }
+            down.endPoint = {
+                x: px,
+                y: (py + my) / 2,
+                z: 0
+            }
+            down.firstControlPoint = {
+                x: mx,
+                y: my - (py - my) / this.bezierCurveCircle,
+                z: 0
+            }
+            down.secondControlPoint = {
+                x: px,
+                y: my - (py - my) / this.bezierCurveCircle,
+                z: 0
+            }
+            bezierCurveArr.push(down)
+        }
+        ellipseLine(startX, startY, endX, endY)
         // 遍历绘制云线
         bezierCurveArr.forEach((item, index) => {
             pointData = pointData.concat(getBezierCurvePoint(item, 'twoControlPoint'))
         })
-        if (pointData.length == 0) return false
         let geometry = new LineGeometry()
         let material = new LineMaterial({
-            color: this.getColor(),
-            linewidth: this.getLineWidth()
+            color,
+            linewidth: lineWidth
         })
-        material.resolution.set(window.innerWidth, window.innerHeight)
-        const pts = []
-        pointData.forEach(vec => {
-            pts.push(vec.x, vec.y, vec.z)
-        })
-        geometry.setPositions(pts)
-        const group = new Group()
-        group.add(new Line2(geometry, material))
-        pWorldDraw.drawEntity(new Line2(geometry, material))
+        geometry.setPositions(transCoordArr(pointData))
+        // Create the final object to add to the scene
+        let line = new Line2(geometry, material)
+        let group = new Group()
+        group.add(line)
+        pWorldDraw.drawEntity(group)
     }
 
     getGripPoints(): Vector3[] {
@@ -162,7 +152,7 @@ class CbimMxDbEclipse extends MxDbEntity {
         return true
     }
     create(): MxDbEntity {
-        return new CbimMxDbEclipse()
+        return new MxDbCircle()
     }
 
     public dwgIn(obj: any) {
@@ -193,24 +183,28 @@ export async function DrawEclipseByAction(params, context) {
     context.drawing = true
     do {
         const mxDraw = MxFun.getCurrentDraw()
-        const point = new MrxDbgUiPrPoint()
+        const getPoint = new MrxDbgUiPrPoint()
+        // const mxEllipse = new CbimMxDbEclipse(params)
+        const mxEllipse = new MxDbEllipse()
+        mxEllipse.setLineWidth(params.lineWidth)
+        mxEllipse.setColor(params.color)
+        getPoint.setMessage("\n点击开始绘制椭圆:")
+        const p1: THREE.Vector3 | null = await getPoint.go()
+        if (!p1) break
+        // mxEllipse.startPoint = p1
+        mxEllipse.point1 = p1
         const worldDrawComment = new McEdGetPointWorldDrawObject()
-        const ent = new CbimMxDbEclipse({
-            lineWidth: params.lineWidth,
-            color: params.color
+        worldDrawComment.setDraw((currentPoint) => {
+            // 动态绘制three.js物体对象
+            // mxEllipse.endPoint = currentPoint
+            mxEllipse.point2 = currentPoint
+            worldDrawComment.drawCustomEntity(mxEllipse)
         })
-        point.setMessage("\n点击开始绘制椭圆:")
-        const pt: THREE.Vector3 | null = await point.go()
-        if (!pt) break
-        ent.pointStart = pt
-        worldDrawComment.setDraw(currentPoint => {
-            ent.pointEnd = currentPoint
-            worldDrawComment.drawCustomEntity(ent)
-        })
-        point.setUserDraw(worldDrawComment)
-        point.setMessage("\n再次点击结束绘制云线:");
-        await point.go()
-        mxDraw.addMxEntity(ent)
+        getPoint.setUserDraw(worldDrawComment)
+        getPoint.setMessage("\n再次点击结束绘制椭圆:")
+        await getPoint.go()
+        mxDraw.addMxEntity(mxEllipse)
+        drawings.push(mxEllipse)
         if (!context.batch) {
             context.drawing = false
         }

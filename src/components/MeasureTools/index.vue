@@ -46,7 +46,7 @@ export default {
     flex-direction: column;
     position: absolute;
     right: 100px;
-    top: 100px;
+    top: 200px;
     color: #fff;
     align-items: center;
 }
