@@ -1,5 +1,5 @@
 import { MrxDbgUiPrPoint, MrxDbgUiPrBaseReturn, MxThreeJS, MxDbCloudLine, MxDbEntity, McGiWorldDraw, MxFun, MxDbEllipse, McEdGetPointWorldDrawObject } from "mxdraw"
-import { Shape, BufferGeometry, Geometry, Face3, Line, Group, Mesh, MeshBasicMaterial, Vector3, Color } from "three";
+import { Shape, BufferGeometry, Geometry, Face3, Line, Group, Mesh, MeshBasicMaterial, Vector3, Color, Points } from "three";
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
@@ -22,33 +22,40 @@ function _transCoordArr(arr) {
 }
 
 class CbimMxDbArrowLine extends MxDbEntity {
-    startPoint = new Vector3()
-    endPoint = new Vector3()
-    markNumberRadius = 2
+    pointList: Array<Vector3> = []
     constructor(params) {
         super(params)
+        if (params.pointList) {
+            this.pointList = params.pointList
+        }
         this.setColor(params.color)
         this.setLineWidth(params.lineWidth)
         this.opacity = params.opacity || 0.5
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
-        if (this.startPoint.x != this.endPoint.x && this.startPoint.y != this.endPoint.y) {
+        let group = new Group()
+        for (let i = 0; i < this.pointList.length; i += 2) {
+            let pointStart = this.pointList[i]
+            let pointEnd = this.pointList[i + 1]
+            // if (!pointStart || !pointEnd) continue
+            console.log(this.pointList.length, !pointStart || !pointEnd, pointStart.x != pointEnd.x && pointStart.y != pointEnd.y)
+            // if (pointStart.x != pointEnd.x && pointStart.y != pointEnd.y) {
             const lineWidth = this.getLineWidth()
             const color = this.getColor()
-            let angle = Math.atan2(this.endPoint.y - this.startPoint.y, this.endPoint.x - this.startPoint.x)
+            let angle = Math.atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x)
             // 距离
-            const dist = Math.sqrt(Math.pow(this.startPoint.x - this.endPoint.x, 2) + Math.pow(this.startPoint.y - this.endPoint.y, 2))
+            const dist = Math.sqrt(Math.pow(pointStart.x - pointEnd.x, 2) + Math.pow(pointStart.y - pointEnd.y, 2))
             let arrowLen = dist / 10
-            const foot = new Vector3(this.startPoint.x + arrowLen * Math.cos(angle), this.startPoint.y + arrowLen * Math.sin(angle), 0)
+            const foot = new Vector3(pointStart.x + arrowLen * Math.cos(angle), pointStart.y + arrowLen * Math.sin(angle), 0)
             const theta = 20 * Math.PI / 180
             const pointStart1 = new Vector3(
-                foot.x * Math.cos(-theta) - foot.y * Math.sin(-theta) - this.startPoint.x * Math.cos(-theta) + this.startPoint.y * Math.sin(-theta) + this.startPoint.x,
-                foot.x * Math.sin(-theta) + foot.y * Math.cos(-theta) - this.startPoint.x * Math.sin(-theta) - this.startPoint.y * Math.cos(-theta) + this.startPoint.y,
+                foot.x * Math.cos(-theta) - foot.y * Math.sin(-theta) - pointStart.x * Math.cos(-theta) + pointStart.y * Math.sin(-theta) + pointStart.x,
+                foot.x * Math.sin(-theta) + foot.y * Math.cos(-theta) - pointStart.x * Math.sin(-theta) - pointStart.y * Math.cos(-theta) + pointStart.y,
                 0
             )
             const pointStart2 = new Vector3(
-                foot.x * Math.cos(theta) - foot.y * Math.sin(theta) - this.startPoint.x * Math.cos(theta) + this.startPoint.y * Math.sin(theta) + this.startPoint.x,
-                foot.x * Math.sin(theta) + foot.y * Math.cos(theta) - this.startPoint.x * Math.sin(theta) - this.startPoint.y * Math.cos(theta) + this.startPoint.y,
+                foot.x * Math.cos(theta) - foot.y * Math.sin(theta) - pointStart.x * Math.cos(theta) + pointStart.y * Math.sin(theta) + pointStart.x,
+                foot.x * Math.sin(theta) + foot.y * Math.cos(theta) - pointStart.x * Math.sin(theta) - pointStart.y * Math.cos(theta) + pointStart.y,
                 0
             )
             // 材质
@@ -58,16 +65,14 @@ class CbimMxDbArrowLine extends MxDbEntity {
             })
             // 防止线宽过宽
             material.resolution.set(window.innerWidth, window.innerHeight)
-            let pointStart = new Vector3(this.startPoint.x, this.startPoint.y, 0)
-            let pointEnd = new Vector3(this.endPoint.x, this.endPoint.y, 0)
             let triangle = _drawTriangle(pointStart, pointStart1, pointStart2, color)
             let geometry = new LineGeometry()
             geometry.setPositions(_transCoordArr([foot, pointEnd]))
             let line = new Line2(geometry, material)
-            let group = new Group()
             group.add(line, triangle)
-            pWorldDraw.drawEntity(group)
+            // }
         }
+        pWorldDraw.drawEntity(group)
     }
 
     getGripPoints(): Vector3[] {
@@ -87,13 +92,17 @@ class CbimMxDbArrowLine extends MxDbEntity {
     }
 
     public dwgIn(obj: any) {
+        console.log('dwg in', obj)
         this.onDwgIn(obj)
         // this.centerPt.copy(obj['centerPt'])
         // this.acnode.copy(obj['acnode'])
         return true
     }
     dwgOut(obj: any) {
-        this.onDwgOut(obj)
+        console.log('dwg out', obj)
+        this.onDwgOut(Object.assign(obj, {
+            pointList: this.pointList
+        }))
         // obj.centerPt = this.centerPt
         // obj.acnode = this.acnode
         return obj
@@ -102,7 +111,7 @@ class CbimMxDbArrowLine extends MxDbEntity {
 
     }
     getTypeName(): string {
-        return "CbimMxDbEclipse"
+        return "CbimMxDbArrowLine"
     }
     moveGripPointsAt(index: number, offset: Vector3) {
         return true
@@ -110,36 +119,63 @@ class CbimMxDbArrowLine extends MxDbEntity {
 }
 
 export async function DrawArrowLineByAction(params, context) {
-    const drawings = []
     context.drawing = true
+    const ent = new CbimMxDbArrowLine({
+        lineWidth: params.lineWidth || 1,
+        color: params.color
+    })
+    const mxDraw = MxFun.getCurrentDraw()
+    // mxDraw.addMxEntity(ent)
+    // document.addEventListener('click', e => {
+    //     const pt = MxFun.screenCoord2Doc(e.offsetX, e.offsetY)
+    //     if (ent.pointList.length && ent.pointList.length % 2 == 0) {
+    //         ent.pointList[ent.pointList.length - 1] = pt
+    //     } else {
+    //         ent.pointList.push(pt)
+    //     }
+    //     console.log(ent.pointList.length)
+    // })
+    // document.addEventListener('mousemove', e => {
+    //     const pt = MxFun.screenCoord2Doc(e.offsetX, e.offsetY)
+    //     if (ent.pointList.length && ent.pointList.length % 2 == 0) {
+    //         ent.pointList[ent.pointList.length - 1] = pt
+    //     } else {
+    //         ent.pointList.push(pt)
+    //     }
+    // })
+    // mxDraw.addMxEntity(ent)
+    const ptList = ent.pointList
     do {
+        // console.warn(ent, ent.getLayer())
         const point = new MrxDbgUiPrPoint()
-        const mxDraw = MxFun.getCurrentDraw()
         const worldDrawComment = new McEdGetPointWorldDrawObject()
-        const ent = new CbimMxDbArrowLine({
-            lineWidth: params.lineWidth || 1,
-            color: params.color
-        })
         point.setMessage("\n点击开始绘制椭圆:");
         const pt1 = await point.go()
         if (!pt1) break
-        ent.startPoint = ent.endPoint = pt1
+        ent.pointList.push(pt1)
+        ent.pointList.push(pt1)
         worldDrawComment.setDraw(currentPoint => {
-            ent.endPoint = currentPoint
+            ent.pointList[ent.pointList.length - 1] = currentPoint
             worldDrawComment.drawCustomEntity(ent)
         })
         point.setUserDraw(worldDrawComment)
         point.setMessage("\n再次点击结束绘制椭圆:");
         await point.go()
-        mxDraw.addMxEntity(ent)
         if (!context.batch) {
             context.drawing = false
         }
     } while (context.drawing)
-    return drawings
+    mxDraw.addMxEntity(ent)
+    return ent
 }
 
 export async function DrawArrowLineByObj(params) {
-    const rect = new CbimMxDbArrowLine()
-    return rect
+    const entity = new CbimMxDbArrowLine({
+        color: params.color,
+        lineWidth: params.lineWidth,
+        opacity: params.opacity,
+    })
+    entity.pointList = params.pointList
+    const mxDraw = MxFun.getCurrentDraw()
+    mxDraw.addMxEntity(entity)
 }

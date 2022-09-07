@@ -3,11 +3,11 @@
 //本软件代码及其文档和相关资料归成都梦想凯德科技有限公司,应用包含本软件的程序必须包括以下版权声明
 //此应用程序与成都梦想凯德科技有限公司成协议。通过使用本软件、其文档或相关材料
 ///////////////////////////////////////////////////////////////////////////////
-import { DrawRectByAction } from './cbimAnnotation/BR_Rectangle'
-import { DrawEclipseByAction } from './cbimAnnotation/BR_Ellipse'
-import { DrawCloudLineV2ByAction } from './cbimAnnotation/BR_CloudLine2'
-import { DrawCloudLineByAction } from './cbimAnnotation/BR_CloudLine'
-import { DrawArrowLineByAction } from './cbimAnnotation/BR_ArrowLine'
+import { DrawRectByAction, DrawRectByObj } from './cbimAnnotation/BR_Rectangle'
+import { DrawEclipseByAction, DrawEclipseByObj } from './cbimAnnotation/BR_Ellipse'
+import { DrawCloudLineV2ByAction, DrawCloudLineV2ByObj } from './cbimAnnotation/BR_CloudLine2'
+import { DrawCloudLineByAction, DrawCloudLineByObj } from './cbimAnnotation/BR_CloudLine'
+import { DrawArrowLineByAction, DrawArrowLineByObj } from './cbimAnnotation/BR_ArrowLine'
 
 export class CbimAnnotationDraw {
     constructor(mxfun) {
@@ -16,6 +16,7 @@ export class CbimAnnotationDraw {
         this.currentDrawObj = null
         this.currentBatchDrawObj = null
         this.mxfun = mxfun
+        this.layout = 'Model'
         this.init()
     }
 
@@ -56,6 +57,41 @@ export class CbimAnnotationDraw {
         this.mxfun.addCommand('Cbim_AnnotationBatchDrawComplete', (args) => {
             this.drawing = false
             this.batch = false
+        })
+        this.mxfun.addCommand('Cbim_AnnotationSaveJSON', () => {
+            const annotations = this.mxfun.getCurrentDraw().saveMxEntityToJson()
+            localStorage.setItem('cbim-annotation', annotations)
+        })
+        this.mxfun.addCommand('Cbim_AnnotationJsonDraw', () => {
+            const annotations = JSON.parse(localStorage.getItem('cbim-annotation') || {})
+            console.log('anno', annotations, typeof annotations)
+            this.drawAnnotations(annotations.entitys || [])
+        })
+    }
+
+    setLayout(layout) {
+        this.layout = layout
+    }
+
+    drawAnnotations(annotations) {
+        annotations.forEach(obj => {
+            console.log('draw anno', obj)
+            switch (obj.TypeName) {
+                case 'CbimMxDbArrowLine':
+                    DrawArrowLineByObj(obj)
+                    break
+                case 'CbimMxDbCloudLine':
+                    DrawCloudLineByObj(obj)
+                    break
+                case 'CbimMxDbEclipse':
+                    DrawEclipseByObj(obj)
+                    break
+                case 'CbimMxDbRect':
+                    DrawRectByObj(obj)
+                    break
+                default:
+                    break
+            }
         })
     }
 }

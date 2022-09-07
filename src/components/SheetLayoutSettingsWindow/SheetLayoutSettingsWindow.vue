@@ -1,6 +1,5 @@
 <template>
     <div class="sheet_layout_settings_window" v-show="isShow">
-        {{currentSpace}}
         <div class="sheet_layout_settings_window_header" @mousedown="onMousedown">
             <span class="sheet_layer-settings_window-header_title">图纸空间</span>
             <div class="bf-close" @click="closeBox"></div>
@@ -33,9 +32,10 @@ const win: any = window
 })
 export default class SheetLayoutSettingsWindow extends Vue {
     @Prop({
-        type: String
+        type: String,
+        default: 'Model'
     })
-    currentSpace: String = ''
+    currentSpace!: String
     @Prop({
         type: Boolean,
         default: false

@@ -1,7 +1,7 @@
 <template>
     <div class="annotation-tools">
         <ul>
-            <li v-for="item in list" :class="{active: mode == item.id && annotationOn}" :key="item.id" @click.stop="changeType(item.id)">{{item.name}}</li>
+            <li v-for="item in list" :class="{active: mode == item.id && annotationOn}" :key="item.id" @click.stop="changeType(item)">{{item.name}}</li>
         </ul>
         <ColorPciker v-model="color" ref="colorPciker" @input="updateColor" />
         <el-slider :step="1" v-model="lineWidth" height="100px" :max="5" :min="1" :vertical="true" @change="updateLineWidth"></el-slider>
@@ -23,13 +23,16 @@ export default {
         return {
             annotationOn: false,
             mode: '',
+            annotations: [],
             color: '#ff0000',
             list: [
                 { id: 1, name: '箭头', cmd: 'Cbim_AnnotationArrow' },
                 { id: 2, name: '云线', cmd: 'Cbim_AnnotationCloudV1' },
                 { id: 3, name: '云线2', cmd: 'Cbim_AnnotationCloudV2' },
                 { id: 4, name: '矩形', cmd: 'Cbim_AnnotationRectangle' },
-                { id: 5, name: '椭圆', cmd: 'Cbim_AnnotationEclipse' }
+                { id: 5, name: '椭圆', cmd: 'Cbim_AnnotationEclipse' },
+                { id: 6, name: '批注保存为JSON', cmd: 'Cbim_AnnotationSaveJSON', noStatus: true },
+                { id: 7, name: '批注JSON还原', cmd: 'Cbim_AnnotationJsonDraw', noStatus: true }
             ],
             lineWidth: 1,
             batch: false
@@ -49,7 +52,17 @@ export default {
         }
     },
     methods: {
-        changeType(type) {
+        changeType(item) {
+            const type = item.id
+            if (item.noStatus) {
+                this.mode = ''
+                this.$emit('postMessage', this.list.find(item => item.id === type).cmd, {
+                    color: this.color,
+                    lineWidth: this.lineWidth,
+                    batch: this.batch
+                })
+                return
+            }
             if (this.mode === type) {
                 this.annotationOn = false
                 this.mode = ''

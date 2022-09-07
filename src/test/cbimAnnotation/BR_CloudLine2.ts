@@ -1,9 +1,9 @@
 import { MrxDbgUiPrPoint, MrxDbgUiPrBaseReturn, MxThreeJS, MxDbCloudLine, MxDbEntity, McGiWorldDraw, MxFun, MxDbEllipse, McEdGetPointWorldDrawObject } from "mxdraw"
 import { Shape, BufferGeometry, Line, LineBasicMaterial, Vector3, Color } from "three";
 
-class CbimMxDbCloudLine extends MxDbEntity {
-    constructor() {
-        super()
+class CbimMxDbCloudLineV2 extends MxDbCloudLine {
+    constructor(params) {
+        super(params)
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
     }
@@ -83,6 +83,4 @@ export async function DrawCloudLineV2ByAction(params, context) {
 }
 
 export async function DrawCloudLineV2ByObj(params) {
-    const obj = new MxDbEllipse();
-    return obj
 }

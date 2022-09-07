@@ -195,17 +195,13 @@ function getBezierCurvePoint(data, sign) {
 }
 
 class CbimMxDbCloudLine extends MxDbEntity {
-    pointStart = new Vector3()
-    pointEnd = new Vector3()
+    pointList: Array<Vector3> = []
     bezierCurveLength = 10 // 曲线间距
     bezierCurveHeight = 1.2 // 曲线的弧度
     constructor(params) {
         super(params)
-        if (params.pointStart) {
-            this.pointStart = params.pointStart
-        }
-        if (params.pointEnd) {
-            this.pointEnd = params.pointEnd
+        if (params.pointList) {
+            this.pointList = params.pointList
         }
         if (params.color) {
             this.setColor(params.color)
@@ -225,53 +221,61 @@ class CbimMxDbCloudLine extends MxDbEntity {
         }
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
-        // 重置所有顶点的数据
-        let pointData = []
-        // 清空之前的所有顶点
-        const bezierCurveArr = []
-        // start代表的是左上角，end代表的是右下角
-        let startX = this.pointStart.x
-        let startY = this.pointStart.y
-        let endX = this.pointEnd.x
-        let endY = this.pointEnd.y
-        if (startX > endX) {
-            const temp = startX
-            startX = endX
-            endX = temp
-        }
-        if (startY < endY) {
-            const temp = startY
-            startY = endY
-            endY = temp
-        }
-        // 重新计算曲线的宽和高
-        let x = Math.round(Math.abs(endX - startX) / this.bezierCurveLength) || 1
-        let y = Math.round(Math.abs(endY - startY) / this.bezierCurveLength) || 1
-        this.bezierCurveX = Math.abs(endX - startX) / x
-        this.bezierCurveY = Math.abs(endY - startY) / y
-        upLine(startX, startY, endX, endY, this.bezierCurveX, this.bezierCurveHeight, bezierCurveArr)
-        rightLine(startX, startY, endX, endY, this.bezierCurveY, this.bezierCurveHeight, bezierCurveArr)
-        downLine(startX, startY, endX, endY, this.bezierCurveX, this.bezierCurveHeight, bezierCurveArr)
-        leftLine(startX, startY, endX, endY, this.bezierCurveY, this.bezierCurveHeight, bezierCurveArr)
-        // 遍历绘制云线
-        bezierCurveArr.forEach((item, index) => {
-            pointData = pointData.concat(getBezierCurvePoint(item))
-        })
-        if (pointData.length == 0) return false
-        let geometry = new LineGeometry()
-        let material = new LineMaterial({
-            color: this.getColor(),
-            linewidth: this.getLineWidth()
-        })
-        material.resolution.set(window.innerWidth, window.innerHeight)
-        const pts = []
-        pointData.forEach(vec => {
-            pts.push(vec.x, vec.y, vec.z)
-        })
-        geometry.setPositions(pts)
         const group = new Group()
-        group.add(new Line2(geometry, material))
-        pWorldDraw.drawEntity(new Line2(geometry, material))
+        for (let i = 0; i < this.pointList.length; i += 2) {
+            let pointStart = this.pointList[i]
+            let pointEnd = this.pointList[i + 1]
+            console.warn(!pointStart, !pointEnd, this.pointList.length, i)
+            if (!pointStart || !pointEnd) continue
+            if (pointStart.x != pointEnd.x && pointStart.y != pointEnd.y) {
+                // 重置所有顶点的数据
+                let pointData = []
+                // 清空之前的所有顶点
+                const bezierCurveArr = []
+                // start代表的是左上角，end代表的是右下角
+                let startX = pointStart.x
+                let startY = pointStart.y
+                let endX = pointEnd.x
+                let endY = pointEnd.y
+                if (startX > endX) {
+                    const temp = startX
+                    startX = endX
+                    endX = temp
+                }
+                if (startY < endY) {
+                    const temp = startY
+                    startY = endY
+                    endY = temp
+                }
+                // 重新计算曲线的宽和高
+                let x = Math.round(Math.abs(endX - startX) / this.bezierCurveLength) || 1
+                let y = Math.round(Math.abs(endY - startY) / this.bezierCurveLength) || 1
+                this.bezierCurveX = Math.abs(endX - startX) / x
+                this.bezierCurveY = Math.abs(endY - startY) / y
+                upLine(startX, startY, endX, endY, this.bezierCurveX, this.bezierCurveHeight, bezierCurveArr)
+                rightLine(startX, startY, endX, endY, this.bezierCurveY, this.bezierCurveHeight, bezierCurveArr)
+                downLine(startX, startY, endX, endY, this.bezierCurveX, this.bezierCurveHeight, bezierCurveArr)
+                leftLine(startX, startY, endX, endY, this.bezierCurveY, this.bezierCurveHeight, bezierCurveArr)
+                // 遍历绘制云线
+                bezierCurveArr.forEach((item, index) => {
+                    pointData = pointData.concat(getBezierCurvePoint(item))
+                })
+                if (pointData.length == 0) return false
+                let geometry = new LineGeometry()
+                let material = new LineMaterial({
+                    color: this.getColor(),
+                    linewidth: this.getLineWidth()
+                })
+                material.resolution.set(window.innerWidth, window.innerHeight)
+                const pts = []
+                pointData.forEach(vec => {
+                    pts.push(vec.x, vec.y, vec.z)
+                })
+                geometry.setPositions(pts)
+                group.add(new Line2(geometry, material))
+            }
+        }
+        pWorldDraw.drawEntity(group)
     }
 
     getGripPoints(): Vector3[] {
@@ -297,9 +301,11 @@ class CbimMxDbCloudLine extends MxDbEntity {
         return true
     }
     dwgOut(obj: any) {
-        this.onDwgOut(obj)
-        // obj.centerPt = this.centerPt
-        // obj.acnode = this.acnode
+        this.onDwgOut(Object.assign(obj, {
+            pointList: this.pointList,
+            bezierCurveLength: this.bezierCurveLength,
+            bezierCurveHeight: this.bezierCurveHeight
+        }))
         return obj
     }
     getGripPoints() {
@@ -314,38 +320,45 @@ class CbimMxDbCloudLine extends MxDbEntity {
 }
 
 export async function DrawCloudLineByAction(params, context) {
-    const drawings = []
     context.drawing = true
+    const mxCloudLine = new CbimMxDbCloudLine({
+        lineWidth: params.lineWidth,
+        color: params.color
+    })
+    const mxDraw = MxFun.getCurrentDraw()
     // 屏幕坐标半径
     do {
         const point = new MrxDbgUiPrPoint()
-        const mxDraw = MxFun.getCurrentDraw()
         const worldDrawComment = new McEdGetPointWorldDrawObject()
-        const radius = MxFun.screenCoordLong2Doc(params.radius || 16)
         point.setMessage("\n点击开启绘制云线:")
         let pt = await point.go()
         if (!pt) break
-        const mxCloudLine = new CbimMxDbCloudLine({
-            lineWidth: params.lineWidth,
-            color: params.color
-        })
-        mxCloudLine.pointStart = pt
+        mxCloudLine.pointList.push(pt)
+        mxCloudLine.pointList.push(pt)
         worldDrawComment.setDraw(currentPoint => {
-            mxCloudLine.pointEnd = currentPoint
+            mxCloudLine.pointList[mxCloudLine.pointList.length - 1] = currentPoint
             worldDrawComment.drawCustomEntity(mxCloudLine)
         })
         point.setUserDraw(worldDrawComment)
         point.setMessage("\n再次点击结束绘制云线:");
         await point.go()
-        mxDraw.addMxEntity(mxCloudLine)
         if (!context.batch) {
             context.drawing = false
         }
     } while (context.drawing)
-    return drawings
+    mxDraw.addMxEntity(mxCloudLine)
+    return mxCloudLine
 }
 
-export async function DrawCloudLineV2ByObj(params) {
-    const obj = new MxDbEllipse();
-    return obj
+export async function DrawCloudLineByObj(params) {
+    const entity = new CbimMxDbCloudLine({
+        color: params.color,
+        lineWidth: params.lineWidth,
+        opacity: params.opacity,
+    })
+    entity.pointList = params.pointList
+    entity.bezierCurveLength = params.bezierCurveLength // 曲线间距
+    entity.bezierCurveHeight = params.bezierCurveHeight // 曲线的弧度
+    const mxDraw = MxFun.getCurrentDraw()
+    mxDraw.addMxEntity(entity)
 }

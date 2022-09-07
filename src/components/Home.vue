@@ -17,8 +17,6 @@
                     <span v-else class="iconfont item-icon" :class="item.icon"></span>
                     <span class="menu-item-name">{{ item.name }}</span>
                 </div>
-                <button @click="testSave">save</button>
-                <button @click="testSave2">save2</button>
             </div>
             <SheetLayerSettingsWindow :list="sheetLayerSettingsData" :isShow="isShowLayerBox" @close="
           () => {
@@ -32,10 +30,19 @@
             <div id="myChart"></div>
             <CoordinatePrompt />
             <ObjectActionBar :isShow="isShowObjectActionbar" />
-            <canvas id="myCanvas" @mouseover.prevent="canvasMouseover" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
-            <Annotation-tools @postMessage="handleAnnotationMessagePost"></Annotation-tools>
+            <canvas id="myCanvas" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
+            <Annotation-tools v-if="isShowAnnotationTools" @postMessage="handleAnnotationMessagePost"></Annotation-tools>
             <Camera-tools :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
-            <Measure-Tools @postMessage="handleAnnotationMessagePost"></Measure-Tools>
+            <Measure-Tools v-if="isShowMeasureTools" @postMessage="handleAnnotationMessagePost"></Measure-Tools>
+            <div class="bottom-bar">
+                <ul>
+                    <li v-for="item in menus" class="iconfont" @click="item.onClick">
+                        <el-tooltip :content="item.name">
+                            <a class="iconfont" :class="item.icon"></a>
+                        </el-tooltip>
+                    </li>
+                </ul>
+            </div>
         </div>
         <!-- 修改文字弹框 -->
         <el-dialog title="修改文字内容" :visible.sync="isShowTextDialog" :before-close="handleCloseTextDialog">
@@ -68,7 +75,6 @@ import ObjectActionBar from '@/components/ObjectActionBar/ObjectActionBar.vue'
 import AnnotationTools from '@/components/AnnotationTools'
 import MeasureTools from '@/components/MeasureTools'
 import CameraTools from '@/components/CameraTools'
-import mxvue from '@/mxvue'
 
 const FILES = ['/demo/buf/fjdy.dwg', '/demo/buf/a.dwg', '/demo/buf/b.dwg', '/demo/buf/c.dwg', '/demo/buf/hhhh.dwg', '/demo/buf/test2.dwg']
 const LAYOUTS = {
@@ -103,6 +109,11 @@ export default class Home extends Vue {
     vp = null
     viewer = null
     isShowTextDialog = false
+    isShowLayerBox = false
+    isShowLayoutBox = false
+    isShowAnnotationTools = false
+    isShowMeasureTools = false
+    isShowColor = false
     // 当前选择的自定义对象
     currentEnt: any = null
     currentSpace = 'Model'
@@ -119,6 +130,7 @@ export default class Home extends Vue {
             cmd: 'layout'
         }
     ]
+    public menus: any = []
     public list: any = [
         {
             name: '测量',
@@ -406,8 +418,6 @@ export default class Home extends Vue {
         }
     ]
     currentItemIndex = -1
-    isShowLayerBox = false
-    isShowLayoutBox = false
     sheetLayerSettingsData: Array<LayerItemType> = []
     sheetLayoutSettingsData: Array<LayoutItemType> = []
 
@@ -499,6 +509,8 @@ export default class Home extends Vue {
                         this.isShowObjectActionbar = false
                     }
                 })
+                this.initMenus()
+                this.initEvent()
             }
         })
         MxFun.listenForCommandLineInput(({ msCmdTip, msCmdDisplay, msCmdText }) => {
@@ -566,7 +578,6 @@ export default class Home extends Vue {
     // 点击事件
     public onClick(item: MenuItemType, event: Event, index: number) {
         if (item.cmd) {
-            console.log(item.cmd)
             MxFun.sendStringToExecute(item.cmd)
         }
     }
@@ -585,21 +596,6 @@ export default class Home extends Vue {
     showObjectActionbar() {
         this.isShowObjectActionbar = true
     }
-    testSave() {
-        const mxcad = MxFun.getCurrentMxCAD()
-        console.log('mxcad', mxcad)
-        debugger
-        mxcad.saveFile('/demo/buf/a.dwg', e => {
-            console.log(e)
-            if (e.succeeded) {
-                const url = 'http://localhost:2700' + '/save/demo/buf/a.dwg'
-                window.open(url)
-            }
-        })
-    }
-    testSave2() {
-        MxFun.sendStringToExecute('BR_Save')
-    }
     handleChangeLayout(layout: String) {
         const fileUrl = this.fileUrl.replace(/\./, function () {
             if (layout === 'Model') return '.'
@@ -607,6 +603,68 @@ export default class Home extends Vue {
         })
         this.currentSpace = layout
         MxFun.openFile(fileUrl)
+    }
+    initMenus() {
+        this.menus = [
+            {
+                name: '视图重置',
+                icon: 'el-icon-s-home',
+                onClick: () => {
+                    this.viewer.zoomInitialStates()
+                    setTimeout(() => {
+                        this.viewer.updateDisplay()
+                    }, 100)
+                }
+            },
+            {
+                name: '批注',
+                icon: 'el-icon-edit',
+                onClick: () => {
+                    this.isShowAnnotationTools = !this.isShowAnnotationTools
+                }
+            },
+            {
+                name: '测量',
+                icon: 'el-icon-d-caret',
+                onClick: () => {
+                    this.isShowMeasureTools = !this.isShowMeasureTools
+                }
+            },
+            {
+                name: '设置背景',
+                icon: 'el-icon-picture',
+                onClick: () => {
+                    const colorPciker = this.$refs.colorPciker as ColorPciker
+                    this.isShowColor = !this.isShowColor
+                    if (this.isShowColor) {
+                        colorPciker.show()
+                    } else {
+                        colorPciker.hide()
+                    }
+                }
+            },
+            {
+                name: '清除批注',
+                icon: 'el-icon-delete',
+                onClick: () => {
+                    this.viewer.getAllMxEntity().forEach(obj => {
+                        // this.viewer.eraseMxEntity(obj.MxDbEntityImp.id)
+                        this.viewer.eraseAllMxEntity()
+                        this.viewer.updateDisplay()
+                    })
+                }
+            }
+        ]
+    }
+    initEvent() {
+        MxFun.addWindowsEvent((type, event) => {
+            // console.log(type, event)
+            // if ((type = 'mousemove')) {
+            //     const pt = MxFun.screenCoord2Doc(event.offsetX, event.offsetY)
+            //     // const arr = this.viewer.findMxEntityAtPoint(pt)
+            // }
+            return 0
+        })
     }
 }
 </script>
@@ -726,5 +784,23 @@ li {
 }
 .layer_btn_box:hover .layer_btn {
     background-color: #fff;
+}
+.bottom-bar {
+    position: absolute;
+    left: 20px;
+    bottom: 10px;
+}
+.bottom-bar ul {
+    display: flex;
+}
+.bottom-bar li {
+    margin-right: 10px;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    cursor: pointer;
+    background: #fff;
+    border-radius: 4px;
+    text-align: center;
 }
 </style>

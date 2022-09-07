@@ -4,14 +4,6 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
 
-function transCoordArr(arr) {
-    let positions = []
-    arr.forEach(item => {
-        positions.push(item.x, item.y, item.z)
-    })
-    return positions
-}
-
 const getBezierCurvePoint = function (data, sign) {
     let curve = ''
     if (sign == 'twoControlPoint') {
@@ -84,16 +76,12 @@ function ellipseLine(px, py, mx, my, bezierCurveCircle, bezierCurveArr) {
 }
 
 class CbimMxDbEclipse extends MxDbEntity {
-    pointStart = new Vector3()
-    pointEnd = new Vector3()
+    pointList: Array<Vector3> = []
     bezierCurveCircle = 6 // 贝塞尔曲线绘制内切圆的时候两个控制点超出的高度系数
     constructor(params) {
         super(params)
-        if (params.pointStart) {
-            this.pointStart = params.pointStart
-        }
-        if (params.pointEnd) {
-            this.pointEnd = params.pointEnd
+        if (params.pointList) {
+            this.pointList = params.pointList
         }
         if (params.color) {
             this.setColor(params.color)
@@ -108,45 +96,49 @@ class CbimMxDbEclipse extends MxDbEntity {
         }
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
-        // 绘制矩形框
-        let pointData = []
-        // 清空之前的所有顶点
-        const bezierCurveArr = []
-        // start代表的是左上角，end代表的是右下角
-        let startX = this.pointStart.x
-        let startY = this.pointStart.y
-        let endX = this.pointEnd.x
-        let endY = this.pointEnd.y
-        if (startX > endX) {
-            const temp = startX
-            startX = endX
-            endX = temp
-        }
-        if (startY < endY) {
-            const temp = startY
-            startY = endY
-            endY = temp
-        }
-        ellipseLine(startX, startY, endX, endY, this.bezierCurveCircle, bezierCurveArr)
-        // 遍历绘制云线
-        bezierCurveArr.forEach((item, index) => {
-            pointData = pointData.concat(getBezierCurvePoint(item, 'twoControlPoint'))
-        })
-        if (pointData.length == 0) return false
-        let geometry = new LineGeometry()
-        let material = new LineMaterial({
-            color: this.getColor(),
-            linewidth: this.getLineWidth()
-        })
-        material.resolution.set(window.innerWidth, window.innerHeight)
-        const pts = []
-        pointData.forEach(vec => {
-            pts.push(vec.x, vec.y, vec.z)
-        })
-        geometry.setPositions(pts)
         const group = new Group()
-        group.add(new Line2(geometry, material))
-        pWorldDraw.drawEntity(new Line2(geometry, material))
+        for (let i = 0; i < this.pointList.length; i += 2) {
+            let pointStart = this.pointList[i]
+            let pointEnd = this.pointList[i + 1]
+            // 绘制矩形框
+            let pointData = []
+            // 清空之前的所有顶点
+            const bezierCurveArr = []
+            // start代表的是左上角，end代表的是右下角
+            let startX = pointStart.x
+            let startY = pointStart.y
+            let endX = pointEnd.x
+            let endY = pointEnd.y
+            if (startX > endX) {
+                const temp = startX
+                startX = endX
+                endX = temp
+            }
+            if (startY < endY) {
+                const temp = startY
+                startY = endY
+                endY = temp
+            }
+            ellipseLine(startX, startY, endX, endY, this.bezierCurveCircle, bezierCurveArr)
+            // 遍历绘制云线
+            bezierCurveArr.forEach((item, index) => {
+                pointData = pointData.concat(getBezierCurvePoint(item, 'twoControlPoint'))
+            })
+            if (pointData.length == 0) return false
+            let geometry = new LineGeometry()
+            let material = new LineMaterial({
+                color: this.getColor(),
+                linewidth: this.getLineWidth()
+            })
+            material.resolution.set(window.innerWidth, window.innerHeight)
+            const pts = []
+            pointData.forEach(vec => {
+                pts.push(vec.x, vec.y, vec.z)
+            })
+            geometry.setPositions(pts)
+            group.add(new Line2(geometry, material))
+        }
+        pWorldDraw.drawEntity(group)
     }
 
     getGripPoints(): Vector3[] {
@@ -172,9 +164,10 @@ class CbimMxDbEclipse extends MxDbEntity {
         return true
     }
     dwgOut(obj: any) {
-        this.onDwgOut(obj)
-        // obj.centerPt = this.centerPt
-        // obj.acnode = this.acnode
+        console.log('out', obj, this.pointList)
+        this.onDwgOut(Object.assign(obj, {
+            pointList: this.pointList
+        }))
         return obj
     }
     getGripPoints() {
@@ -189,22 +182,22 @@ class CbimMxDbEclipse extends MxDbEntity {
 }
 
 export async function DrawEclipseByAction(params, context) {
-    const drawings = []
     context.drawing = true
+    const ent = new CbimMxDbEclipse({
+        lineWidth: params.lineWidth,
+        color: params.color
+    })
+    const mxDraw = MxFun.getCurrentDraw()
     do {
-        const mxDraw = MxFun.getCurrentDraw()
         const point = new MrxDbgUiPrPoint()
         const worldDrawComment = new McEdGetPointWorldDrawObject()
-        const ent = new CbimMxDbEclipse({
-            lineWidth: params.lineWidth,
-            color: params.color
-        })
         point.setMessage("\n点击开始绘制椭圆:")
         const pt: THREE.Vector3 | null = await point.go()
         if (!pt) break
-        ent.pointStart = pt
+        ent.pointList.push(pt)
+        ent.pointList.push(pt)
         worldDrawComment.setDraw(currentPoint => {
-            ent.pointEnd = currentPoint
+            ent.pointList[ent.pointList.length - 1] = currentPoint
             worldDrawComment.drawCustomEntity(ent)
         })
         point.setUserDraw(worldDrawComment)
@@ -215,17 +208,17 @@ export async function DrawEclipseByAction(params, context) {
             context.drawing = false
         }
     } while (context.drawing)
+    mxDraw.addMxEntity(ent)
     return drawings
 }
 
 export async function DrawEclipseByObj(params) {
-    const obj = new MxDbEllipse();
-    const pt1 = params.begin
-    const pt2 = params.end
-    obj.point1 = pt1
-    obj.point2 = pt2
-    obj.setColor(params.color)
-    obj.setLineWidth(params.lineWidth)
-    MxFun.getCurrentDraw().addMxEntity(obj)
-    return obj
+    const entity = new CbimMxDbEclipse({
+        color: params.color,
+        lineWidth: params.lineWidth,
+        opacity: params.opacity,
+    })
+    entity.pointList = params.pointList
+    const mxDraw = MxFun.getCurrentDraw()
+    mxDraw.addMxEntity(entity)
 }
