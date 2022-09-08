@@ -1,24 +1,18 @@
 <template>
-  <div id="app">
-    <Home />
-  </div>
+    <div id="app">
+        <router-view></router-view>
+    </div>
 </template>
 <script>
-
 </script>
 
 <script lang="ts">
-import "/public/css/iconfont.css"
-import { Component, Vue } from "vue-property-decorator";
-import Home from "./components/Home.vue";
+import '/public/css/iconfont.css'
+import { Component, Vue } from 'vue-property-decorator'
 @Component({
-  components: {
-    Home,
-  },
+    components: {}
 })
-export default class App extends Vue {
-
-}
+export default class App extends Vue {}
 </script>
 
 <style>

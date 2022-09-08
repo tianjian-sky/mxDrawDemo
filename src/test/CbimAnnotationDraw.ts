@@ -17,7 +17,7 @@ export class CbimAnnotationDraw {
         this.currentBatchDrawObj = null
         this.mxfun = mxfun
         this.layout = 'Model'
-        this.init()
+        // this.init()
     }
 
     init() {
@@ -90,6 +90,8 @@ export class CbimAnnotationDraw {
                     DrawRectByObj(obj)
                     break
                 default:
+                    const mxDraw = this.mxfun.getCurrentDraw()
+                    mxDraw.addMxEntity(obj)
                     break
             }
         })

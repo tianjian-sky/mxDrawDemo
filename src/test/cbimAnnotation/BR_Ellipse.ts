@@ -78,6 +78,8 @@ function ellipseLine(px, py, mx, my, bezierCurveCircle, bezierCurveArr) {
 class CbimMxDbEclipse extends MxDbEntity {
     pointList: Array<Vector3> = []
     bezierCurveCircle = 6 // 贝塞尔曲线绘制内切圆的时候两个控制点超出的高度系数
+    annotationId: String = ''
+    layout: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -94,9 +96,16 @@ class CbimMxDbEclipse extends MxDbEntity {
         } else {
             this.bezierCurveCircle = MxFun.screenCoordLong2Doc(6)
         }
+        if (params.annotationId) {
+            this.annotationId = params.annotationId
+        }
+        if (params.layout) {
+            this.layout = params.layout
+        }
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
         const group = new Group()
+        group.userData.type = 'cbim_annotation_eclipse'
         for (let i = 0; i < this.pointList.length; i += 2) {
             let pointStart = this.pointList[i]
             let pointEnd = this.pointList[i + 1]
@@ -166,7 +175,9 @@ class CbimMxDbEclipse extends MxDbEntity {
     dwgOut(obj: any) {
         console.log('out', obj, this.pointList)
         this.onDwgOut(Object.assign(obj, {
-            pointList: this.pointList
+            pointList: this.pointList,
+            annotationId: this.annotationId,
+            layout: this.layout
         }))
         return obj
     }

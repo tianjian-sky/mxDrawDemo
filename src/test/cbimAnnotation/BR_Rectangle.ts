@@ -3,10 +3,18 @@ import { BufferAttribute, PlaneBufferGeometry, Group, DoubleSide, MeshBasicMater
 
 class CbimMxDbRect extends MxDbEntity {
     pointList: Array<Vector3> = []
+    annotationId: String = ''
+    layout: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
             this.pointList = params.pointList
+        }
+        if (params.annotationId) {
+            this.annotationId = params.annotationId
+        }
+        if (params.layout) {
+            this.layout = params.layout
         }
         this.setColor(params.color)
         this.setLineWidth(params.lineWidth)
@@ -14,6 +22,7 @@ class CbimMxDbRect extends MxDbEntity {
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
         let group = new Group()
+        group.userData.type = 'cbim_annotation_rectanble'
         for (let i = 0; i < this.pointList.length; i += 2) {
             const pointStart = this.pointList[i]
             const pointEnd = this.pointList[i + 1]
@@ -85,7 +94,9 @@ class CbimMxDbRect extends MxDbEntity {
     }
     dwgOut(obj: any) {
         this.onDwgOut(Object.assign(obj, {
-            pointList: this.pointList
+            pointList: this.pointList,
+            annotationId: this.annotationId,
+            layout: this.layout
         }))
         return obj
     }

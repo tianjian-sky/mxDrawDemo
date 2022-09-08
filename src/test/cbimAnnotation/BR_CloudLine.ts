@@ -198,6 +198,8 @@ class CbimMxDbCloudLine extends MxDbEntity {
     pointList: Array<Vector3> = []
     bezierCurveLength = 10 // 曲线间距
     bezierCurveHeight = 1.2 // 曲线的弧度
+    annotationId: String = ''
+    layout: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -219,9 +221,16 @@ class CbimMxDbCloudLine extends MxDbEntity {
         } else {
             this.bezierCurveHeight = MxFun.screenCoordLong2Doc(5)
         }
+        if (params.annotationId) {
+            this.annotationId = params.annotationId
+        }
+        if (params.layout) {
+            this.layout = params.layout
+        }
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
         const group = new Group()
+        group.userData.type = 'cbim_annotation_cloudLine'
         for (let i = 0; i < this.pointList.length; i += 2) {
             let pointStart = this.pointList[i]
             let pointEnd = this.pointList[i + 1]
@@ -304,7 +313,9 @@ class CbimMxDbCloudLine extends MxDbEntity {
         this.onDwgOut(Object.assign(obj, {
             pointList: this.pointList,
             bezierCurveLength: this.bezierCurveLength,
-            bezierCurveHeight: this.bezierCurveHeight
+            bezierCurveHeight: this.bezierCurveHeight,
+            annotationId: this.annotationId,
+            layout: this.layout
         }))
         return obj
     }

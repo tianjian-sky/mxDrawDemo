@@ -1,40 +1,41 @@
 {
-  "name": "embedmxcad",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
-  },
-  "dependencies": {
-    "core-js": "^3.6.5",
-    "echarts": "^5.2.2",
-    "element-ui": "^2.15.8",
-    "html2canvas": "^1.4.1",
-    "jcanvas": "^21.0.1",
-    "jquery": "^3.6.0",
-    "lodash": "^4.17.21",
-    "mxdraw": "^0.1.32",
-    "os": "^0.1.1",
-    "three": "^0.113.2",
-    "three-fatline": "^0.5.3",
-    "vue": "^2.6.11",
-    "vue-class-component": "^7.2.3",
-    "vue-color": "^2.8.1",
-    "vue-property-decorator": "^9.1.2",
-    "vuex": "^3.6.2"
-  },
-  "devDependencies": {
-    "@types/jcanvas": "^15.2.5",
-    "@types/jquery": "^3.5.13",
-    "@vue/cli-plugin-babel": "4.5.0",
-    "@vue/cli-plugin-typescript": "4.5.0",
-    "@vue/cli-service": "4.5.0",
-    "babel-loader": "^8.2.5",
-    "babel-plugin-component": "^1.1.1",
-    "babel-plugin-import": "^1.13.3",
-    "typescript": "4.5.3",
-    "vue-template-compiler": "^2.6.11"
-  }
+    "name": "embedmxcad",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "serve": "vue-cli-service serve",
+        "build": "vue-cli-service build",
+        "lint": "vue-cli-service lint"
+    },
+    "dependencies": {
+        "core-js": "^3.6.5",
+        "echarts": "^5.2.2",
+        "element-ui": "^2.15.8",
+        "html2canvas": "^1.4.1",
+        "jcanvas": "^21.0.1",
+        "jquery": "^3.6.0",
+        "lodash": "^4.17.21",
+        "mxdraw": "^0.1.32",
+        "os": "^0.1.1",
+        "three": "^0.113.2",
+        "three-fatline": "^0.5.3",
+        "vue": "^2.6.11",
+        "vue-class-component": "^7.2.3",
+        "vue-color": "^2.8.1",
+        "vue-property-decorator": "^9.1.2",
+        "vuex": "^3.6.2"
+    },
+    "devDependencies": {
+        "@types/jcanvas": "^15.2.5",
+        "@types/jquery": "^3.5.13",
+        "@vue/cli-plugin-babel": "4.5.0",
+        "@vue/cli-plugin-typescript": "4.5.0",
+        "@vue/cli-service": "4.5.0",
+        "babel-loader": "^8.2.5",
+        "babel-plugin-component": "^1.1.1",
+        "babel-plugin-import": "^1.13.3",
+        "typescript": "4.5.3",
+        "vue-router": "^3.3.4",
+        "vue-template-compiler": "^2.6.11"
+    }
 }

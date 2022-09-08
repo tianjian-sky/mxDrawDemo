@@ -1,10 +1,13 @@
 
 import Vue from 'vue';
 import App from './App.vue';
+import Home from '@/components/Home.vue'
+import DrawingCompare from '@/components/DrawingCompare.vue'
 import { loadCoreCode } from "mxdraw"
 import store from "@/store"
-import { Dialog, Input, Button, Checkbox, Slider, Tooltip, Icon } from 'element-ui';
-
+import VueRouter from 'vue-router'
+import { Dialog, Input, Button, Checkbox, Slider, Tooltip, Icon, Select, Option } from 'element-ui';
+Vue.use(VueRouter)
 Vue.use(Dialog)
 Vue.use(Input)
 Vue.use(Button)
@@ -12,12 +15,25 @@ Vue.use(Checkbox)
 Vue.use(Slider)
 Vue.use(Tooltip)
 Vue.use(Icon)
+Vue.use(Select)
+Vue.use(Option)
+
+const router = new VueRouter({
+    mode: 'history',
+    base: '/',
+    routes: [
+        { path: '/home', component: Home },
+        { path: '/drawingCompare', component: DrawingCompare }
+    ]
+})
+
 loadCoreCode().then(() => {
 
     Vue.config.productionTip = false;
     new Vue({
-        render: (h) => h(App),
-        store
+        router,
+        store,
+        render: h => h(App)
     }).$mount("#app");
 
 })

@@ -33,7 +33,7 @@
             <div id="myChart"></div>
             <CoordinatePrompt />
             <ObjectActionBar :isShow="isShowObjectActionbar" />
-            <canvas id="myCanvas" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
+            <canvas id="mycanvas2" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
             <Annotation-tools v-if="isShowAnnotationTools" @postMessage="handleAnnotationMessagePost"></Annotation-tools>
             <Camera-tools :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
             <Measure-Tools v-if="isShowMeasureTools" @postMessage="handleAnnotationMessagePost"></Measure-Tools>

@@ -23,10 +23,18 @@ function _transCoordArr(arr) {
 
 class CbimMxDbArrowLine extends MxDbEntity {
     pointList: Array<Vector3> = []
+    annotationId: String = ''
+    layout: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
             this.pointList = params.pointList
+        }
+        if (params.annotationId) {
+            this.annotationId = params.annotationId
+        }
+        if (params.layout) {
+            this.layout = params.layout
         }
         this.setColor(params.color)
         this.setLineWidth(params.lineWidth)
@@ -34,11 +42,12 @@ class CbimMxDbArrowLine extends MxDbEntity {
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
         let group = new Group()
+        group.userData.type = 'cbim_annotation_arrow'
+        group.userData.annotationId = this.annotationId
         for (let i = 0; i < this.pointList.length; i += 2) {
             let pointStart = this.pointList[i]
             let pointEnd = this.pointList[i + 1]
             // if (!pointStart || !pointEnd) continue
-            console.log(this.pointList.length, !pointStart || !pointEnd, pointStart.x != pointEnd.x && pointStart.y != pointEnd.y)
             // if (pointStart.x != pointEnd.x && pointStart.y != pointEnd.y) {
             const lineWidth = this.getLineWidth()
             const color = this.getColor()
@@ -101,7 +110,9 @@ class CbimMxDbArrowLine extends MxDbEntity {
     dwgOut(obj: any) {
         console.log('dwg out', obj)
         this.onDwgOut(Object.assign(obj, {
-            pointList: this.pointList
+            pointList: this.pointList,
+            annotationId: this.annotationId,
+            layout: this.layout
         }))
         // obj.centerPt = this.centerPt
         // obj.acnode = this.acnode
