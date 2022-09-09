@@ -9,9 +9,6 @@
                     <h1 class="menu-title">
                         <img :src="logoImgUrl" alt="MxCad" /> 网页制图
                     </h1>
-                    <el-select v-model="fileUrl" @change="loadFile">
-                        <el-option v-for="item in FILES" :key="item" :label="item" :value="item"></el-option>
-                    </el-select>
                 </template>
             </TestMenu> -->
             <!-- <div class="layer_btn_box" @click="layerBtnClikc">
@@ -472,7 +469,7 @@ export default class Home extends Vue {
                 canvasParent.className = 'mxdiv'
                 // mxDrawObject.initRunMode(2)
                 // 用于屏幕截图，启用three.js 绘图缓冲,不用截图，可以禁用该功能。
-                mxDrawObject.initRendererParam({ preserveDrawingBuffer: true })
+                mxDrawObject.initRendererParam({ preserveDrawingBuffer: true, alpha: true })
 
                 //设计鼠标中键移动视区.
                 mxDrawObject.setMouseMiddlePan(false)
@@ -538,6 +535,7 @@ export default class Home extends Vue {
     }
 
     loadFile(fileUrl) {
+        this.viewer.makeCurrent()
         this.currentSpace = 'Model'
         MxFun.openFile(fileUrl)
     }
@@ -583,21 +581,25 @@ export default class Home extends Vue {
         }
     }
     handleAnnotationMessagePost(cmd, val) {
+        this.viewer.makeCurrent()
         MxFun.sendStringToExecute(cmd, val)
     }
     updateColor(color: any) {
+        this.viewer.makeCurrent()
         const scene = MxFun.getCurrentDraw().getScene()
         setSenceColor(scene, color.hex)
         MxFun.updateDisplay()
     }
     // 点击事件
     public onClick(item: MenuItemType, event: Event, index: number) {
+        this.viewer.makeCurrent()
         if (item.cmd) {
             MxFun.sendStringToExecute(item.cmd)
         }
     }
 
     layerBtnClikc(item: any) {
+        this.viewer.makeCurrent()
         switch (item.cmd) {
             case 'layer':
                 this.isShowLayerBox = !this.isShowLayerBox
@@ -625,6 +627,7 @@ export default class Home extends Vue {
                 name: '视图重置',
                 icon: 'el-icon-s-home',
                 onClick: () => {
+                    this.viewer.makeCurrent()
                     this.viewer.zoomInitialStates()
                     setTimeout(() => {
                         this.viewer.updateDisplay()
@@ -635,6 +638,7 @@ export default class Home extends Vue {
                 name: '批注',
                 icon: 'el-icon-edit',
                 onClick: () => {
+                    this.viewer.makeCurrent()
                     this.isShowAnnotationTools = !this.isShowAnnotationTools
                 }
             },
@@ -642,6 +646,7 @@ export default class Home extends Vue {
                 name: '测量',
                 icon: 'el-icon-d-caret',
                 onClick: () => {
+                    this.viewer.makeCurrent()
                     this.isShowMeasureTools = !this.isShowMeasureTools
                 }
             },
@@ -649,6 +654,7 @@ export default class Home extends Vue {
                 name: '设置背景',
                 icon: 'el-icon-picture',
                 onClick: () => {
+                    this.viewer.makeCurrent()
                     const colorPciker = this.$refs.colorPciker as ColorPciker
                     this.isShowColor = !this.isShowColor
                     if (this.isShowColor) {
@@ -662,6 +668,7 @@ export default class Home extends Vue {
                 name: '清除批注',
                 icon: 'el-icon-delete',
                 onClick: () => {
+                    this.viewer.makeCurrent()
                     this.viewer.getAllMxEntity().forEach(obj => {
                         // this.viewer.eraseMxEntity(obj.MxDbEntityImp.id)
                         this.viewer.eraseAllMxEntity()
@@ -672,7 +679,13 @@ export default class Home extends Vue {
         ]
     }
     initEvent() {
-        MxFun.addWindowsEvent((type, event) => {
+        this.$el.addEventListener('mousemove', event => {
+            this.viewer.makeCurrent()
+            const intersects = this.getIntersectAnnotation(event.offsetX, event.offsetY)
+            this.cursor = intersects.length ? 'pointer' : 'default'
+        })
+        this.$el.addEventListener('click', event => {
+            this.viewer.makeCurrent()
             const _getAnnotationObj = part => {
                 while (part) {
                     if (part?.userData?.type && part?.userData?.type?.indexOf('cbim_annotation') === 0) {
@@ -683,27 +696,19 @@ export default class Home extends Vue {
                 }
                 return null
             }
-            if (type == 'mousedown') {
-                const intersects = this.getIntersectAnnotation(event.offsetX, event.offsetY)
-                this.cursor = intersects.length ? 'pointer' : 'default'
-                let target
-                for (const obj of intersects) {
-                    target = _getAnnotationObj(obj.object)
-                    if (target) break
-                }
-                if (target) {
-                    const box = new Box3()
-                    box.setFromObject(target)
-                    const center = this.viewer.worldCoord2Doc2(box.getCenter())
-                    MxFun.getCurrentDraw().zoomCenter(center.x, center.y)
-                }
+            const intersects = this.getIntersectAnnotation(event.offsetX, event.offsetY)
+            this.cursor = intersects.length ? 'pointer' : 'default'
+            let target
+            for (const obj of intersects) {
+                target = _getAnnotationObj(obj.object)
+                if (target) break
             }
-            if (type == 'mousemove') {
-                // const arr = MxFun.getCurrentDraw().getIntersectObjects(new Vector2(event.offsetX, event.offsetY))
-                const intersects = this.getIntersectAnnotation(event.offsetX, event.offsetY)
-                this.cursor = intersects.length ? 'pointer' : 'default'
+            if (target) {
+                const box = new Box3()
+                box.setFromObject(target)
+                const center = this.viewer.worldCoord2Doc2(box.getCenter())
+                MxFun.getCurrentDraw().zoomCenter(center.x, center.y)
             }
-            return 0
         })
     }
     getIntersectAnnotation(mouseX, mouseY) {

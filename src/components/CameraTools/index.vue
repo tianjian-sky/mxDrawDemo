@@ -4,11 +4,10 @@
             <div ref="mask" class="mask" @mousewheel="handleMouseWheel" @mousedown.stop="handleMouseDown" :style="{left: `${mask.left}px`, top: `${mask.top}px`, width: `${mask.width}px`, height: `${mask.height}px`}"></div>
         </div>
         <div class="buttons">
-            <a @click="zoomIn">+</a>
-            <a @click="zoomOut">-</a>
-            <a @click="rotateLeft">向左旋转</a>
-            <a @click="rotateRight">向右旋转</a>
-            <a @click="reset">重置</a>
+            <a class="el-icon-circle-plus-outline" @click="zoomIn"></a>
+            <a class="el-icon-remove-outline" @click="zoomOut"></a>
+            <a class="el-icon-refresh-left" @click="rotateLeft"></a>
+            <a class="el-icon-refresh-right" @click="rotateRight"></a>
         </div>
     </div>
 </template>
