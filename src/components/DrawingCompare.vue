@@ -12,7 +12,6 @@
 </script>
 
 <script lang="ts">
-import '/public/css/iconfont.css'
 import Home from './Home.vue'
 import { Component, Vue } from 'vue-property-decorator'
 @Component({
