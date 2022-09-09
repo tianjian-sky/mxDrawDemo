@@ -1,7 +1,10 @@
 <template>
     <div class="content" :style="{cursor}">
         <div id="mxdiv">
-            <TestMenu :data="list" @change="onClick" ref="testMenu">
+            <el-select v-model="fileUrl" style="position:absolute;right:10px;top:10px;" @change="loadFile">
+                <el-option v-for="item in FILES" :key="item" :label="item" :value="item"></el-option>
+            </el-select>
+            <!-- <TestMenu :data="list" @change="onClick" ref="testMenu">
                 <template slot="top">
                     <h1 class="menu-title">
                         <img :src="logoImgUrl" alt="MxCad" /> 网页制图
@@ -10,10 +13,10 @@
                         <el-option v-for="item in FILES" :key="item" :label="item" :value="item"></el-option>
                     </el-select>
                 </template>
-            </TestMenu>
-            <div class="layer_btn_box" @click="layerBtnClikc">
+            </TestMenu> -->
+            <!-- <div class="layer_btn_box" @click="layerBtnClikc">
                 <div class="iconfont icon-layers layer_btn"></div>
-            </div>
+            </div> -->
             <div class="sidebar-menu">
                 <div class="menu-item" v-for="(item, index) in sidebarMenuData" :key="index" @click="layerBtnClikc(item)">
                     <img class="item-img" v-if="item.icon.indexOf('/') >= 0" :src="item.icon" />
@@ -33,7 +36,7 @@
             <div id="myChart"></div>
             <CoordinatePrompt />
             <ObjectActionBar :isShow="isShowObjectActionbar" />
-            <canvas id="myCanvas" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
+            <canvas :id="canvasId" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
             <Annotation-tools v-if="isShowAnnotationTools" @postMessage="handleAnnotationMessagePost"></Annotation-tools>
             <Camera-tools :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
             <Measure-Tools v-if="isShowMeasureTools" @postMessage="handleAnnotationMessagePost"></Measure-Tools>
@@ -62,7 +65,6 @@
 <script lang="ts">
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import { MxFun } from 'mxdraw'
-// import { MxFun } from './mxfun'
 import { RegistMxCommands, RxInitMxEntity } from '@/test/command'
 import SheetLayerSettingsWindow, { LayerItemType } from '@/components/SheetLayerSettingsWindow/SheetLayerSettingsWindow.vue'
 import SheetLayoutSettingsWindow, { LayoutItemType } from '@/components/SheetLayoutSettingsWindow/SheetLayoutSettingsWindow.vue'
@@ -70,8 +72,6 @@ import TestMenu, { MenuItemType } from '@/components/TestMenu/TestMenu.vue'
 import ColorPciker from '@/components/ColorPciker/ColorPciker.vue'
 import { layout as layoutIcon, layer as layerIcon } from '@/assets/img/menuIcon'
 import store from '@/store'
-
-import * as menuIcon from '@/assets/img/menuIcon'
 import { setSenceColor } from '@/test/systems/setSenceColor'
 import CoordinatePrompt from '@/components/CoordinatePrompt/CoordinatePrompt.vue'
 import ObjectActionBar from '@/components/ObjectActionBar/ObjectActionBar.vue'
@@ -583,7 +583,6 @@ export default class Home extends Vue {
         }
     }
     handleAnnotationMessagePost(cmd, val) {
-        console.warn(cmd, val)
         MxFun.sendStringToExecute(cmd, val)
     }
     updateColor(color: any) {
@@ -674,10 +673,8 @@ export default class Home extends Vue {
     }
     initEvent() {
         MxFun.addWindowsEvent((type, event) => {
-            console.log(type)
             const _getAnnotationObj = part => {
                 while (part) {
-                    console.log(part?.userData?.type)
                     if (part?.userData?.type && part?.userData?.type?.indexOf('cbim_annotation') === 0) {
                         return part
                     } else {
@@ -694,12 +691,10 @@ export default class Home extends Vue {
                     target = _getAnnotationObj(obj.object)
                     if (target) break
                 }
-                console.log('intersects', intersects, target)
                 if (target) {
                     const box = new Box3()
                     box.setFromObject(target)
                     const center = this.viewer.worldCoord2Doc2(box.getCenter())
-                    console.log(center.x, center.y)
                     MxFun.getCurrentDraw().zoomCenter(center.x, center.y)
                 }
             }
@@ -707,7 +702,6 @@ export default class Home extends Vue {
                 // const arr = MxFun.getCurrentDraw().getIntersectObjects(new Vector2(event.offsetX, event.offsetY))
                 const intersects = this.getIntersectAnnotation(event.offsetX, event.offsetY)
                 this.cursor = intersects.length ? 'pointer' : 'default'
-                console.log('intersects', intersects)
             }
             return 0
         })
@@ -729,7 +723,6 @@ export default class Home extends Vue {
         pointer.x = (mouseX / MxFun.getCurrentDraw().getViewWidth()) * 2 - 1
         pointer.y = -(mouseY / MxFun.getCurrentDraw().getViewHeight()) * 2 + 1
         if (layer) {
-            // console.log('console', layer)
             rc.setFromCamera(pointer, camera)
             intersects = rc.intersectObjects([layer], true)
         }
@@ -861,6 +854,7 @@ li {
 }
 .bottom-bar ul {
     display: flex;
+    list-style-type: none;
 }
 .bottom-bar li {
     margin-right: 10px;
@@ -871,5 +865,9 @@ li {
     background: #fff;
     border-radius: 4px;
     text-align: center;
+}
+
+.bottom-bar li.active {
+    color: orangered;
 }
 </style>

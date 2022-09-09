@@ -14,6 +14,7 @@ export class CbimAnnotationMeasure {
 
     init() {
         this.mxfun.addCommand('Cbim_MeasureDistance', async () => {
+            console.log('measure')
             const mDist = new MxMeasure()
             mDist.DoDimensionMeasurement()
         })

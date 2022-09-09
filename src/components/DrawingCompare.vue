@@ -4,7 +4,7 @@
             <Home />
         </div>
         <div class="draw">
-            <HomeSub canvasId="mycanvas2" />
+            <Home canvasId="mycanvas2" />
         </div>
     </div>
 </template>
