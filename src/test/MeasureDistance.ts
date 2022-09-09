@@ -13,7 +13,7 @@ import {
     MxFun,
     McGiWorldDrawType
 } from "mxdraw";
-
+let measureList = []
 export class MyAlignedDimension extends MxDbAlignedDimension {
     [x: string]: any
     constructor() {
@@ -120,12 +120,18 @@ export class MxMeasure {
 
                 // 绘制自定义实体到图上.
                 MxFun.getCurrentDraw().addMxEntity(dim);
-
+                measureList.push(dim)
                 //计算长度.
                 var vec = new THREE.Vector3(pt1.x - pt2.x, pt1.y - pt2.y, 0);
                 var dLen = vec.length();
                 console.log("测试长度是：" + dLen.toFixed(3));
             });
         });
+    }
+    clear() {
+        measureList.forEach(obj => {
+            MxFun.getCurrentDraw().eraseMxEntity(obj.MxDbEntityImp.id)
+        })
+        measureList = []
     }
 }

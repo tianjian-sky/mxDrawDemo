@@ -15,23 +15,23 @@ import {
 
 } from "mxdraw";
 
-
+let measureList = []
 export class MyArea extends MxDbArea {
     public getDimText(): string {
         let lArea = McGeTool.calcArea(this.points);
         return lArea.toFixed(2) + "m2";
     }
-  
-    public create(): MyArea {
-      return new MyArea();
-    }
-  
-    public getTypeName(): string {
-      return "MyArea";
-    }
-  }
 
-  
+    public create(): MyArea {
+        return new MyArea();
+    }
+
+    public getTypeName(): string {
+        return "MyArea";
+    }
+}
+
+
 
 // 面积自定义实体。
 export class MeasureArea {
@@ -48,7 +48,7 @@ export class MeasureArea {
             const worldDrawComment = new McEdGetPointWorldDrawObject();
             worldDrawComment.setDraw(
                 (currentPoint: THREE.Vector3, pWorldDraw) => {
-                    let tmp:MxDbArea = area.clone() as MxDbArea;
+                    let tmp: MxDbArea = area.clone() as MxDbArea;
                     tmp.addPoint(currentPoint);
                     worldDrawComment.drawCustomEntity(tmp);
                 }
@@ -71,15 +71,21 @@ export class MeasureArea {
                     mxDbHatch.setRenderOrder(MxType.MxDefaultRenderOrder.kMxEntityRenderOrder -2);
                     MxFun.getCurrentDraw().addMxEntity(mxDbHatch);
                     */
-                   
+
                     area.isFill = true;
                     area.fillOpacity = 0.7;
                     area.fillColor = 0x663244;
                     MxFun.getCurrentDraw().addMxEntity(area);
-                    
+                    measureList.push(area)
                 }
             );
-            
+
         });
+    }
+    clear() {
+        measureList.forEach(obj => {
+            MxFun.getCurrentDraw().eraseMxEntity(obj.MxDbEntityImp.id)
+        })
+        measureList = []
     }
 }

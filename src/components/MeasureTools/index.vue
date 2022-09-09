@@ -17,7 +17,8 @@ export default {
             list: [
                 { id: 1, name: '直线测量', cmd: 'Cbim_MeasureDistance' },
                 { id: 2, name: '角度测量', cmd: 'Cbim_MeasureAngle' },
-                { id: 3, name: '面积测量', cmd: 'Cbim_MeasureArea' }
+                { id: 3, name: '面积测量', cmd: 'Cbim_MeasureArea' },
+                { id: 4, name: '清除测量', cmd: 'Cbim_MeasureClear', noStatus: true }
             ]
         }
     },
@@ -30,6 +31,11 @@ export default {
     },
     methods: {
         changeType(type) {
+            const obj = this.list.find(item => item.id === type)
+            if (obj.noStatus) {
+                this.$emit('postMessage', obj.cmd)
+                return
+            }
             if (this.mode === type) {
                 this.mode = ''
             } else {

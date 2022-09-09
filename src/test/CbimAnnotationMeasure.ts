@@ -4,24 +4,31 @@
 //此应用程序与成都梦想凯德科技有限公司成协议。通过使用本软件、其文档或相关材料
 ///////////////////////////////////////////////////////////////////////////////
 import { MxMeasure } from './MeasureDistance'
-import BR_AngleSurveying from './Objects/BR_AngleSurveying'
+import { MeasureAngle } from './MeasureAngle'
 import { MeasureArea } from './MeasureArea'
 export class CbimAnnotationMeasure {
     constructor(mxfun) {
         this.mxfun = mxfun
+        this.lineMeasure = new MxMeasure()
+        this.areaMeasure = new MeasureArea()
+        this.angleMeasure = new MeasureAngle()
         this.init()
     }
 
     init() {
         this.mxfun.addCommand('Cbim_MeasureDistance', async () => {
-            console.log('measure')
-            const mDist = new MxMeasure()
-            mDist.DoDimensionMeasurement()
+            this.lineMeasure.DoDimensionMeasurement()
         })
-        this.mxfun.addCommand('Cbim_MeasureAngle', BR_AngleSurveying)
+        this.mxfun.addCommand('Cbim_MeasureAngle', async () => {
+            this.angleMeasure.Do()
+        })
         this.mxfun.addCommand('Cbim_MeasureArea', async () => {
-            const mArea = new MeasureArea()
-            mArea.Do()
+            this.areaMeasure.Do()
+        })
+        this.mxfun.addCommand('Cbim_MeasureClear', async () => {
+            this.lineMeasure.clear()
+            this.areaMeasure.clear()
+            this.angleMeasure.clear()
         })
     }
 }
