@@ -61,6 +61,7 @@
 </template>
 <script lang="ts">
 import { Component, Vue, Prop } from 'vue-property-decorator'
+import configs from '@/config'
 import { MxFun } from 'mxdraw'
 import { RegistMxCommands, RxInitMxEntity } from '@/test/command'
 import SheetLayerSettingsWindow, { LayerItemType } from '@/components/SheetLayerSettingsWindow/SheetLayerSettingsWindow.vue'
@@ -458,7 +459,7 @@ export default class Home extends Vue {
             //cadFile: "http://localhost:8088/demo/buf/hhhh.dwg",
             //cadFile: "/demo/buf/$hhhh.dwg.mxb1.wgh",
             // cadFile: '/demo/buf/hhhh.dwg',
-            cadFile: this.fileUrl,
+            cadFile: configs.dwgFolder + this.fileUrl,
             //cadFile: "/demo/buf/aaa.dwg",
             //cadFile: aryStaticFile,
             isMxCAD: false,
@@ -537,7 +538,7 @@ export default class Home extends Vue {
     loadFile(fileUrl) {
         this.viewer.makeCurrent()
         this.currentSpace = 'Model'
-        MxFun.openFile(fileUrl)
+        MxFun.openFile(configs.dwgFolder + fileUrl)
     }
 
     // 关闭文字弹框
@@ -619,7 +620,7 @@ export default class Home extends Vue {
             else return `#${layout}#.`
         })
         this.currentSpace = layout
-        MxFun.openFile(fileUrl)
+        MxFun.openFile(configs.dwgFolder + fileUrl)
     }
     initMenus() {
         this.menus = [
@@ -644,7 +645,7 @@ export default class Home extends Vue {
             },
             {
                 name: '测量',
-                icon: 'el-icon-d-caret',
+                icon: 'el-icon-odometer',
                 onClick: () => {
                     this.viewer.makeCurrent()
                     this.isShowMeasureTools = !this.isShowMeasureTools

@@ -20,7 +20,7 @@ Vue.use(Select)
 Vue.use(Option)
 
 const router = new VueRouter({
-    mode: 'history',
+    mode: 'hash',
     base: '/',
     routes: [
         { path: '/', component: Home },
