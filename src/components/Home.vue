@@ -76,7 +76,7 @@ import ObjectActionBar from '@/components/ObjectActionBar/ObjectActionBar.vue'
 import AnnotationTools from '@/components/AnnotationTools'
 import MeasureTools from '@/components/MeasureTools'
 import CameraTools from '@/components/CameraTools'
-import { Vector2, Raycaster, Box3 } from 'three'
+import { Vector2, Raycaster, Box3, FontLoader } from 'three'
 
 const win: any = window
 @Component({
@@ -527,6 +527,19 @@ export default class Home extends Vue {
                 })
                 this.initMenus()
                 this.initEvent()
+                const fontLoader = new FontLoader()
+                fontLoader.load(
+                    configs.dwgFolder + '/song.json',
+                    font => {
+                        window.mxFontData = font
+                    },
+                    function (xhr) {
+                        console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+                    },
+                    function (err) {
+                        console.log('An error happened', err)
+                    }
+                )
             }
         })
         MxFun.listenForCommandLineInput(({ msCmdTip, msCmdDisplay, msCmdText }) => {

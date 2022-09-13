@@ -17,7 +17,8 @@ export class CbimAnnotationDraw {
         this.currentBatchDrawObj = null
         this.mxfun = mxfun
         this.layout = 'Model'
-        // this.init()
+        this.uuid = 1
+        this.fontData = null
     }
 
     init() {

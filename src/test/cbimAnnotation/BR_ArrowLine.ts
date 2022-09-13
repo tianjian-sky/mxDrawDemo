@@ -1,5 +1,5 @@
-import { MrxDbgUiPrPoint, MrxDbgUiPrBaseReturn, MxThreeJS, MxDbCloudLine, MxDbEntity, McGiWorldDraw, MxFun, MxDbEllipse, McEdGetPointWorldDrawObject } from "mxdraw"
-import { Shape, BufferGeometry, Geometry, Face3, Line, Group, Mesh, MeshBasicMaterial, Vector3, Color, Points } from "three";
+import { MrxDbgUiPrPoint, MrxDbgUiPrBaseReturn, MxThreeJS, MxDbCloudLine, MxDbEntity, McGiWorldDraw, MxFun, MxDbText, MxDbEllipse, McEdGetPointWorldDrawObject } from "mxdraw"
+import { Shape, BufferGeometry, Geometry, Face3, Line, Group, Mesh, MeshBasicMaterial, Vector3, Color, Points, TextBufferGeometry, MeshBasicMaterial, CircleBufferGeometry, Box3 } from "three";
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
@@ -48,13 +48,13 @@ class CbimMxDbArrowLine extends MxDbEntity {
         let group = new Group()
         group.userData.type = 'cbim_annotation_arrow'
         group.userData.annotationId = this.annotationId
+        const lineWidth = this.getLineWidth()
+        const color = this.getColor()
         for (let i = 0; i < this.pointList.length; i += 2) {
             let pointStart = this.pointList[i]
             let pointEnd = this.pointList[i + 1]
             // if (!pointStart || !pointEnd) continue
             // if (pointStart.x != pointEnd.x && pointStart.y != pointEnd.y) {
-            const lineWidth = this.getLineWidth()
-            const color = this.getColor()
             let angle = Math.atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x)
             // 距离
             const dist = Math.sqrt(Math.pow(pointStart.x - pointEnd.x, 2) + Math.pow(pointStart.y - pointEnd.y, 2))
@@ -83,8 +83,26 @@ class CbimMxDbArrowLine extends MxDbEntity {
             geometry.setPositions(_transCoordArr([foot, pointEnd]))
             let line = new Line2(geometry, material)
             group.add(line, triangle)
-            // }
         }
+        console.log(333, this.code)
+        const str = this.code + ''
+        const box = new Box3()
+        box.setFromObject(group)
+        const circleSize = MxFun.screenCoordLong2Doc(10)
+        var geometry2 = new CircleBufferGeometry(circleSize, 72)
+        var material2 = new MeshBasicMaterial({ color })
+        var circle = new Mesh(geometry2, material2)
+        circle.position.set(box.max.x, box.min.y, 0)
+        group.add(circle)
+        let textGeometry = new TextBufferGeometry(str, {
+            font: window.mxFontData,
+            height: 1,
+            size: circleSize
+        })
+        let textMaterial = new MeshBasicMaterial({ color: '#FFFFFF' })
+        let text = new Mesh(textGeometry, textMaterial)
+        text.position.set(box.max.x - str.length * circleSize * 0.7 / 2, box.min.y - circleSize / 2, 0)
+        group.add(text)
         pWorldDraw.drawEntity(group)
     }
 
@@ -139,29 +157,9 @@ export async function DrawArrowLineByAction(params, context) {
     const ent = new CbimMxDbArrowLine({
         lineWidth: params.lineWidth || 1,
         color: params.color,
-        code: params.code || ''
+        code: context.uuid++
     })
     const mxDraw = MxFun.getCurrentDraw()
-    // mxDraw.addMxEntity(ent)
-    // document.addEventListener('click', e => {
-    //     const pt = MxFun.screenCoord2Doc(e.offsetX, e.offsetY)
-    //     if (ent.pointList.length && ent.pointList.length % 2 == 0) {
-    //         ent.pointList[ent.pointList.length - 1] = pt
-    //     } else {
-    //         ent.pointList.push(pt)
-    //     }
-    //     console.log(ent.pointList.length)
-    // })
-    // document.addEventListener('mousemove', e => {
-    //     const pt = MxFun.screenCoord2Doc(e.offsetX, e.offsetY)
-    //     if (ent.pointList.length && ent.pointList.length % 2 == 0) {
-    //         ent.pointList[ent.pointList.length - 1] = pt
-    //     } else {
-    //         ent.pointList.push(pt)
-    //     }
-    // })
-    // mxDraw.addMxEntity(ent)
-    const ptList = ent.pointList
     do {
         // console.warn(ent, ent.getLayer())
         const point = new MrxDbgUiPrPoint()
@@ -191,6 +189,7 @@ export async function DrawArrowLineByObj(params) {
         color: params.color,
         lineWidth: params.lineWidth,
         opacity: params.opacity,
+        code: params.code
     })
     entity.pointList = params.pointList
     const mxDraw = MxFun.getCurrentDraw()

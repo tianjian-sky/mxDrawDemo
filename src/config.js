@@ -9,7 +9,7 @@
 const env = process.env.NODE_ENV
 const configs = {
     production: {
-        dwgFolder: './public'
+        dwgFolder: './public',
     },
     development: {
         dwgFolder: ''

@@ -29,7 +29,7 @@ export default {
             list: [
                 { id: 1, name: '箭头', cmd: 'Cbim_AnnotationArrow' },
                 { id: 2, name: '云线', cmd: 'Cbim_AnnotationCloudV1' },
-                { id: 3, name: '云线2', cmd: 'Cbim_AnnotationCloudV2' },
+                // { id: 3, name: '云线2', cmd: 'Cbim_AnnotationCloudV2' },
                 { id: 4, name: '矩形', cmd: 'Cbim_AnnotationRectangle' },
                 { id: 5, name: '椭圆', cmd: 'Cbim_AnnotationEclipse' },
                 { id: 6, name: '批注保存为JSON', cmd: 'Cbim_AnnotationSaveJSON', noStatus: true },
