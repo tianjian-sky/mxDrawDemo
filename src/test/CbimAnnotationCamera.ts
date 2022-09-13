@@ -18,11 +18,15 @@ export class CbimAnnotationCamera {
         this.mxfun.addCommand('Cbim_DrawingCameraReset', async (factor) => {
             this.mxfun.getCurrentDraw().zoomInitialStates()
         })
-        this.mxfun.addCommand('Cbim_DrawingCameraRotateLeft', async (factor) => {
-            this.mxfun.getCurrentDraw().zoomInitialStates()
+        this.mxfun.addCommand('Cbim_DrawingCameraRotate', async (deg) => {
+            this.mxfun.getCurrentDraw().getCamera().rotateZ(-90 * Math.PI / 180)
+            this.mxfun.getCurrentDraw().getCamera().updateProjectionMatrix()
+            // this.mxfun.getCurrentDraw().getOrbitControls().rotate(deg)
         })
-        this.mxfun.addCommand('Cbim_DrawingCameraRotateRight', async (factor) => {
-            this.mxfun.getCurrentDraw().zoomInitialStates()
+        this.mxfun.addCommand('Cbim_DrawingCameraRotate', async (deg) => {
+            this.mxfun.getCurrentDraw().getCamera().rotateZ(90 * Math.PI / 180)
+            this.mxfun.getCurrentDraw().getCamera().updateProjectionMatrix()
+            // this.mxfun.getCurrentDraw().getOrbitControls().rotate(deg)
         })
     }
 }

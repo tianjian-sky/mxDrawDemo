@@ -133,10 +133,10 @@ export default {
             })
         },
         rotateLeft() {
-            this.$emit('postMessage', 'Cbim_DrawingCameraRotateLeft')
+            this.$emit('postMessage', 'Cbim_DrawingCameraRotate', -90)
         },
         rotateRight() {
-            this.$emit('postMessage', 'Cbim_DrawingCameraRotateRight')
+            this.$emit('postMessage', 'Cbim_DrawingCameraRotate', 90)
         },
         reset() {
             this.$emit('postMessage', 'Cbim_DrawingCameraReset')
@@ -235,6 +235,7 @@ export default {
 }
 .camera-tools .buttons a {
     cursor: pointer;
+    color: orangered;
 }
 .camera-tools .mask {
     position: absolute;
