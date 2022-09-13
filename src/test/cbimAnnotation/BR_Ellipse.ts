@@ -80,6 +80,7 @@ class CbimMxDbEclipse extends MxDbEntity {
     bezierCurveCircle = 6 // 贝塞尔曲线绘制内切圆的时候两个控制点超出的高度系数
     annotationId: String = ''
     layout: String = ''
+    code: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -101,6 +102,9 @@ class CbimMxDbEclipse extends MxDbEntity {
         }
         if (params.layout) {
             this.layout = params.layout
+        }
+        if (params.code) {
+            this.code = params.code
         }
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
@@ -177,6 +181,7 @@ class CbimMxDbEclipse extends MxDbEntity {
         this.onDwgOut(Object.assign(obj, {
             pointList: this.pointList,
             annotationId: this.annotationId,
+            code: this.code,
             layout: this.layout
         }))
         return obj
@@ -227,6 +232,7 @@ export async function DrawEclipseByObj(params) {
     const entity = new CbimMxDbEclipse({
         color: params.color,
         lineWidth: params.lineWidth,
+        code: params.code || '',
         opacity: params.opacity,
     })
     entity.pointList = params.pointList

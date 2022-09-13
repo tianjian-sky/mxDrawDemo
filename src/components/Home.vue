@@ -41,7 +41,7 @@
                 <ul>
                     <li v-for="item in menus" class="iconfont" @click="item.onClick">
                         <el-tooltip :content="item.name">
-                            <a class="iconfont" :class="item.icon"></a>
+                            <a class="iconfont" :class="item.icon" style="color:orangered;"></a>
                         </el-tooltip>
                     </li>
                 </ul>
@@ -100,14 +100,21 @@ export default class Home extends Vue {
     canvasId!: String;
     [x: string]: any
     logoImgUrl = require('@/assets/img/logo.png')
-    FILES = ['/demo/buf/fjdy.dwg', '/demo/buf/a.dwg', '/demo/buf/b.dwg', '/demo/buf/c.dwg', '/demo/buf/hhhh.dwg', '/demo/buf/test2.dwg']
+    FILES = [/* '/demo/buf/image.jpeg', '/demo/buf/image2.png', */ '/demo/buf/fjdy.dwg', '/demo/buf/a.dwg', '/demo/buf/b.dwg', '/demo/buf/c.dwg', '/demo/buf/hhhh.dwg', '/demo/buf/test2.dwg', '/demo/buf/dxf1.dxf', '/demo/buf/dxf2.dxf', '/demo/buf/dxf3.dxf', '/demo/buf/dxf4.dxf', '/demo/buf/dxf5.dxf']
     LAYOUTS = {
+        '/demo/buf/image.jpeg': ['Model'],
+        '/demo/buf/image2.png': ['Model'],
         '/demo/buf/fjdy.dwg': ['Model', 'Layout1', 'Layout2'],
         '/demo/buf/a.dwg': ['Model', 'Layout1', 'Layout2'],
         '/demo/buf/b.dwg': ['Model', 'Layout1', 'Layout2'],
         '/demo/buf/c.dwg': ['Model', 'Layout1', 'Layout2'],
         '/demo/buf/hhhh.dwg': ['Model', 'Layout1', 'Layout2'],
-        '/demo/buf/test2.dwg': ['Model', 'Layout1']
+        '/demo/buf/test2.dwg': ['Model', 'Layout1'],
+        '/demo/buf/dxf1.dxf': ['Model', 'Layout1', 'Layout2'],
+        '/demo/buf/dxf2.dxf': ['Model', 'Layout1', 'Layout2'],
+        '/demo/buf/dxf3.dxf': ['Model', 'Layout1', 'Layout2'],
+        '/demo/buf/dxf4.dxf': ['Model', 'Layout1', 'Layout2'],
+        '/demo/buf/dxf5.dxf': ['Model', 'Layout1', 'Layout2']
     }
     color = '#ffffff'
     isShowObjectActionbar = false
@@ -615,10 +622,13 @@ export default class Home extends Vue {
         this.isShowObjectActionbar = true
     }
     handleChangeLayout(layout: String) {
-        const fileUrl = this.fileUrl.replace(/\./, function () {
+        let fileUrl = this.fileUrl.replace(/\./, function () {
             if (layout === 'Model') return '.'
             else return `#${layout}#.`
         })
+        if (layout != 'Model' && fileUrl.match(/\.dxf$/)) {
+            fileUrl = fileUrl.replace(/\.dxf$/, '.dwg')
+        }
         this.currentSpace = layout
         MxFun.openFile(configs.dwgFolder + fileUrl)
     }

@@ -3,9 +3,10 @@
         <ul>
             <li v-for="item in list" :class="{active: mode == item.id && annotationOn}" :key="item.id" @click.stop="changeType(item)">{{item.name}}</li>
         </ul>
-        <ColorPciker v-model="color" ref="colorPciker" @input="updateColor" />
+        <div class="color-trigger" :style="{background: color}" @click="toggleColor"></div>
+        <ColorPciker :isShowColorPicker="isShowColorPicker" v-model="color" ref="colorPciker" @input="updateColor" />
         <el-slider :step="1" v-model="lineWidth" height="100px" :max="5" :min="1" :vertical="true" @change="updateLineWidth"></el-slider>
-        <el-checkbox v-model="batch" @change="handleBachDrawChange">批量绘制</el-checkbox>
+        <el-checkbox style="margin-top:16px;" v-model="batch" @change="handleBachDrawChange">批量绘制</el-checkbox>
         <div v-if="batch">
             <el-button @click.stop="confirmBatch">确认</el-button>
         </div>
@@ -35,6 +36,7 @@ export default {
                 { id: 7, name: '批注JSON还原', cmd: 'Cbim_AnnotationJsonDraw', noStatus: true }
             ],
             lineWidth: 1,
+            isShowColorPicker: false,
             batch: false
         }
     },
@@ -79,7 +81,16 @@ export default {
         handleBachDrawChange() {
             this.$emit('postMessage', 'Cbim_AnnotationBatchDrawChange', this.batch)
         },
-        updateColor() {
+        toggleColor() {
+            this.$refs['colorPciker'].isShowColorPicker = !this.$refs['colorPciker'].isShowColorPicker
+            if (this.$refs['colorPciker'].isShowColorPicker) {
+                this.$refs['colorPciker'].show()
+            } else {
+                this.$refs['colorPciker'].hide()
+            }
+        },
+        updateColor(val) {
+            this.color = val.hex
             this.$emit('postMessage', 'Cbim_AnnotationColorChange', this.color)
         },
         updateLineWidth() {
@@ -95,7 +106,7 @@ export default {
     flex-direction: column;
     position: absolute;
     right: 100px;
-    top: 10px;
+    top: 40px;
     color: #fff;
     align-items: center;
 }
@@ -103,7 +114,21 @@ export default {
     cursor: pointer;
     list-style-type: none;
 }
+.annotation-tools .color-trigger {
+    margin: 8px 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
 .annotation-tools li.active {
     color: yellow;
+}
+.annotation-tools .el-slider {
+    margin: 0 0 8px 0;
+}
+.annotation-tools .color-picker {
+    right: 200px;
+    left: auto;
 }
 </style>

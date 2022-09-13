@@ -5,6 +5,7 @@ class CbimMxDbRect extends MxDbEntity {
     pointList: Array<Vector3> = []
     annotationId: String = ''
     layout: String = ''
+    code: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -15,6 +16,9 @@ class CbimMxDbRect extends MxDbEntity {
         }
         if (params.layout) {
             this.layout = params.layout
+        }
+        if (params.code) {
+            this.code = params.code
         }
         this.setColor(params.color)
         this.setLineWidth(params.lineWidth)
@@ -96,6 +100,7 @@ class CbimMxDbRect extends MxDbEntity {
         this.onDwgOut(Object.assign(obj, {
             pointList: this.pointList,
             annotationId: this.annotationId,
+            code: this.code,
             layout: this.layout
         }))
         return obj
@@ -149,7 +154,8 @@ export async function DrawRectByAction(params, context) {
 export async function DrawRectByObj(params) {
     const entity = new CbimMxDbRect({
         color: params.color,
-        lineWidth: params.lineWidth
+        lineWidth: params.lineWidth,
+        code: params.code
     })
     entity.pointList = params.pointList
     const mxDraw = MxFun.getCurrentDraw()

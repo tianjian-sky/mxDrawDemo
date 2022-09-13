@@ -52,7 +52,7 @@ export default {
     flex-direction: column;
     position: absolute;
     right: 100px;
-    top: 200px;
+    top: 40px;
     color: #fff;
     align-items: center;
 }

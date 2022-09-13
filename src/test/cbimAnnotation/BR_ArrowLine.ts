@@ -25,6 +25,7 @@ class CbimMxDbArrowLine extends MxDbEntity {
     pointList: Array<Vector3> = []
     annotationId: String = ''
     layout: String = ''
+    code: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -35,6 +36,9 @@ class CbimMxDbArrowLine extends MxDbEntity {
         }
         if (params.layout) {
             this.layout = params.layout
+        }
+        if (params.code) {
+            this.code = params.code
         }
         this.setColor(params.color)
         this.setLineWidth(params.lineWidth)
@@ -112,6 +116,7 @@ class CbimMxDbArrowLine extends MxDbEntity {
         this.onDwgOut(Object.assign(obj, {
             pointList: this.pointList,
             annotationId: this.annotationId,
+            code: this.code,
             layout: this.layout
         }))
         // obj.centerPt = this.centerPt
@@ -133,7 +138,8 @@ export async function DrawArrowLineByAction(params, context) {
     context.drawing = true
     const ent = new CbimMxDbArrowLine({
         lineWidth: params.lineWidth || 1,
-        color: params.color
+        color: params.color,
+        code: params.code || ''
     })
     const mxDraw = MxFun.getCurrentDraw()
     // mxDraw.addMxEntity(ent)

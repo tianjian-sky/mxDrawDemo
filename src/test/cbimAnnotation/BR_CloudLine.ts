@@ -200,6 +200,7 @@ class CbimMxDbCloudLine extends MxDbEntity {
     bezierCurveHeight = 1.2 // 曲线的弧度
     annotationId: String = ''
     layout: String = ''
+    code: String = ''
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -226,6 +227,9 @@ class CbimMxDbCloudLine extends MxDbEntity {
         }
         if (params.layout) {
             this.layout = params.layout
+        }
+        if (params.code) {
+            this.code = params.code
         }
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
@@ -315,6 +319,7 @@ class CbimMxDbCloudLine extends MxDbEntity {
             bezierCurveLength: this.bezierCurveLength,
             bezierCurveHeight: this.bezierCurveHeight,
             annotationId: this.annotationId,
+            code: this.code,
             layout: this.layout
         }))
         return obj
@@ -365,6 +370,7 @@ export async function DrawCloudLineByObj(params) {
     const entity = new CbimMxDbCloudLine({
         color: params.color,
         lineWidth: params.lineWidth,
+        code: params.code || '',
         opacity: params.opacity,
     })
     entity.pointList = params.pointList
