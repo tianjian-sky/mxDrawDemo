@@ -41,7 +41,9 @@ export default {
                 width: 200,
                 height: 100
             },
-            currentViewport: null
+            currentViewport: null,
+            wheelTimer: null,
+            control: false
         }
     },
     watch: {
@@ -69,14 +71,11 @@ export default {
         handleMouseDown(e) {
             let startX = e.clientX
             let startY = e.clientY
-            this.listenViewerChange = false
             const _mm = e => {
                 const curX = e.clientX
                 const curY = e.clientY
                 const dx = curX - startX
                 const dy = curY - startY
-                this.mask.left += dx
-                this.mask.top += dy
                 startX = curX
                 startY = curY
                 const p1 = this.viewer.screenCoord2World((dx / this.mask.width) * this.viewer.getViewWidth(), (dy / this.mask.height) * this.viewer.getViewHeight(), 0)
@@ -86,39 +85,44 @@ export default {
             const _mup = e => {
                 this.$refs.mask.removeEventListener('mousemove', _mm)
                 this.$refs.mask.removeEventListener('mouseup', _mup)
-                this.listenViewerChange = true
             }
             this.$refs.mask.addEventListener('mousemove', _mm)
             this.$refs.mask.addEventListener('mouseup', _mup)
         },
         handleMouseWheel(e) {
-            const delta = e.wheelDelta
-            const bound = e.target.getBoundingClientRect()
-            const center = { x: e.clientX - bound.left, y: e.clientY - bound.top, z: 0 }
-            const rate = delta < 0 ? 1.1 : 0.9
-            const zoomCenter = {
-                x: (center.x * this.viewer.getViewWidth()) / this.mask.width,
-                y: (center.y * this.viewer.getViewHeight()) / this.mask.height
-            }
-            const v1 = {
-                x: 0,
-                y: 0
-            }
-            const v2 = {
-                x: this.viewer.getViewWidth(),
-                y: this.viewer.getViewHeight()
-            }
-            const v12 = {
-                x: rate * v1.x + zoomCenter.x * (1 - rate),
-                y: rate * v1.y + zoomCenter.y * (1 - rate)
-            }
-            const v22 = {
-                x: rate * v2.x + zoomCenter.x * (1 - rate),
-                y: rate * v2.y + zoomCenter.y * (1 - rate)
-            }
-            const p1 = this.viewer.screenCoord2World(v12.x, v12.y, 0)
-            const p2 = this.viewer.screenCoord2World(v22.x, v22.y, 0)
-            MxFun.getCurrentDraw().zoomW(p1, p2, true)
+            if (this.wheelTimer) return
+            this.listenViewerChange = false
+            this.wheelTimer = setTimeout(() => {
+                const delta = e.wheelDelta
+                const bound = e.target.getBoundingClientRect()
+                const center = { x: e.offsetX, y: e.offsetY, z: 0 }
+                const rate = delta < 0 ? 1.1 : 0.9
+                const zoomCenter = {
+                    x: (center.x * this.viewer.getViewWidth()) / this.mask.width,
+                    y: (center.y * this.viewer.getViewHeight()) / this.mask.height
+                }
+                const v1 = {
+                    x: 0,
+                    y: 0
+                }
+                const v2 = {
+                    x: this.viewer.getViewWidth(),
+                    y: this.viewer.getViewHeight()
+                }
+                const v12 = {
+                    x: rate * v1.x + zoomCenter.x * (1 - rate),
+                    y: rate * v1.y + zoomCenter.y * (1 - rate)
+                }
+                const v22 = {
+                    x: rate * v2.x + zoomCenter.x * (1 - rate),
+                    y: rate * v2.y + zoomCenter.y * (1 - rate)
+                }
+                const p1 = this.viewer.screenCoord2World(v12.x, v12.y, 0)
+                const p2 = this.viewer.screenCoord2World(v22.x, v22.y, 0)
+                this.listenViewerChange = true
+                MxFun.getCurrentDraw().zoomW(p1, p2, true)
+                this.wheelTimer = null
+            }, 200)
         },
         zoomIn() {
             this.$emit('postMessage', 'Cbim_DrawingCameraZoom', 1.1)
@@ -143,6 +147,15 @@ export default {
             this.$nextTick(() => {
                 this.handleViewChange()
             })
+        },
+        changeDrawing() {
+            this.mask = {
+                left: 0,
+                top: 0,
+                width: 200,
+                height: 100
+            }
+            this.currentViewport = null
         },
         handleViewChange() {
             if (!this.listenViewerChange) return

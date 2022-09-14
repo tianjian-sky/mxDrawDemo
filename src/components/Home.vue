@@ -35,7 +35,7 @@
             <ObjectActionBar :isShow="isShowObjectActionbar" />
             <canvas :id="canvasId" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
             <Annotation-tools v-if="isShowAnnotationTools" @postMessage="handleAnnotationMessagePost"></Annotation-tools>
-            <Camera-tools :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
+            <Camera-tools ref="minimap" :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
             <Measure-Tools v-if="isShowMeasureTools" @postMessage="handleAnnotationMessagePost"></Measure-Tools>
             <div class="bottom-bar">
                 <ul>
@@ -60,6 +60,7 @@
 
 </template>
 <script lang="ts">
+import '../iconfont.css'
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import configs from '@/config'
 import { MxFun } from 'mxdraw'
@@ -559,6 +560,7 @@ export default class Home extends Vue {
         this.viewer.makeCurrent()
         this.currentSpace = 'Model'
         MxFun.openFile(configs.dwgFolder + fileUrl)
+        this.$refs.minimap.changeDrawing()
     }
 
     // 关闭文字弹框
@@ -644,6 +646,7 @@ export default class Home extends Vue {
         }
         this.currentSpace = layout
         MxFun.openFile(configs.dwgFolder + fileUrl)
+        this.$refs.minimap.changeDrawing()
     }
     initMenus() {
         this.menus = [
