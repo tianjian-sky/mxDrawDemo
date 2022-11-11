@@ -21,11 +21,18 @@ function _transCoordArr(arr) {
     return positions
 }
 
-class CbimMxDbArrowLine extends MxDbEntity {
+export class CbimMxDbArrowLine extends MxDbEntity {
     pointList: Array<Vector3> = []
     annotationId: String = ''
     layout: String = ''
     code: String = ''
+    graph: null
+    lines = []
+    triangles = []
+    circle: null
+    entId = null
+    pWorldDraw = null
+    layer = null
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -41,15 +48,19 @@ class CbimMxDbArrowLine extends MxDbEntity {
             this.code = params.code
         }
         this.setColor(params.color)
+        this.layer = new Group()
+        MxFun.getCurrentDraw().getScene().add(this.layer)
         this.setLineWidth(params.lineWidth)
         this.opacity = params.opacity || 0.5
     }
     worldDraw(pWorldDraw: McGiWorldDraw): void {
+        this.pWorldDraw = pWorldDraw
         let group = new Group()
         group.userData.type = 'cbim_annotation_arrow'
         group.userData.annotationId = this.annotationId
         const lineWidth = this.getLineWidth()
         const color = this.getColor()
+        console.log('worlddraw', this.pointList[this.pointList.length - 1])
         for (let i = 0; i < this.pointList.length; i += 2) {
             let pointStart = this.pointList[i]
             let pointEnd = this.pointList[i + 1]
@@ -82,9 +93,10 @@ class CbimMxDbArrowLine extends MxDbEntity {
             let geometry = new LineGeometry()
             geometry.setPositions(_transCoordArr([foot, pointEnd]))
             let line = new Line2(geometry, material)
+            this.lines.push(line)
+            this.triangles.push(triangle)
             group.add(line, triangle)
         }
-        console.log(333, this.code)
         const str = this.code + ''
         const box = new Box3()
         box.setFromObject(group)
@@ -93,17 +105,90 @@ class CbimMxDbArrowLine extends MxDbEntity {
         var material2 = new MeshBasicMaterial({ color })
         var circle = new Mesh(geometry2, material2)
         circle.position.set(box.max.x, box.min.y, 0)
+        this.circle = circle
         group.add(circle)
-        let textGeometry = new TextBufferGeometry(str, {
-            font: window.mxFontData,
-            height: 1,
-            size: circleSize
-        })
-        let textMaterial = new MeshBasicMaterial({ color: '#FFFFFF' })
-        let text = new Mesh(textGeometry, textMaterial)
-        text.position.set(box.max.x - str.length * circleSize * 0.7 / 2, box.min.y - circleSize / 2, 0)
-        group.add(text)
+        // let textGeometry = new TextBufferGeometry(str, {
+        //     font: window.mxFontData,
+        //     height: 1,
+        //     size: circleSize
+        // })
+        // let textMaterial = new MeshBasicMaterial({ color: '#FFFFFF' })
+        // let text = new Mesh(textGeometry, textMaterial)
+        // text.position.set(box.max.x - str.length * circleSize * 0.7 / 2, box.min.y - circleSize / 2, 0)
+        // group.add(text)
+        this.graph = group
         pWorldDraw.drawEntity(group)
+        MxFun.getCurrentDraw().updateDisplay()
+    }
+
+    draw() {
+        const mxDraw = MxFun.getCurrentDraw()
+        this.entId = mxDraw.addMxEntity(this)
+        MxFun.getCurrentDraw().updateDisplay()
+    }
+    drawTemp(pt) {
+        const parent = this.graph.parent// this.layer
+        // debugger
+        // parent.children.pop()
+        parent.remove(this.graph)
+        this.graph = null
+        this.pointList[this.pointList.length - 1] = pt
+        let group = new Group()
+        group.userData.type = 'cbim_annotation_arrow'
+        group.userData.annotationId = this.annotationId
+        const lineWidth = this.getLineWidth()
+        const color = this.getColor()
+        for (let i = 0; i < this.pointList.length; i += 2) {
+            let pointStart = this.pointList[i]
+            let pointEnd = this.pointList[i + 1]
+            console.warn(pointStart, pointEnd)
+            // if (!pointStart || !pointEnd) continue
+            // if (pointStart.x != pointEnd.x && pointStart.y != pointEnd.y) {
+            let angle = Math.atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x)
+            // 距离
+            const dist = Math.sqrt(Math.pow(pointStart.x - pointEnd.x, 2) + Math.pow(pointStart.y - pointEnd.y, 2))
+            let arrowLen = dist / 10
+            const foot = new Vector3(pointStart.x + arrowLen * Math.cos(angle), pointStart.y + arrowLen * Math.sin(angle), 0)
+            const theta = 20 * Math.PI / 180
+            const pointStart1 = new Vector3(
+                foot.x * Math.cos(-theta) - foot.y * Math.sin(-theta) - pointStart.x * Math.cos(-theta) + pointStart.y * Math.sin(-theta) + pointStart.x,
+                foot.x * Math.sin(-theta) + foot.y * Math.cos(-theta) - pointStart.x * Math.sin(-theta) - pointStart.y * Math.cos(-theta) + pointStart.y,
+                0
+            )
+            const pointStart2 = new Vector3(
+                foot.x * Math.cos(theta) - foot.y * Math.sin(theta) - pointStart.x * Math.cos(theta) + pointStart.y * Math.sin(theta) + pointStart.x,
+                foot.x * Math.sin(theta) + foot.y * Math.cos(theta) - pointStart.x * Math.sin(theta) - pointStart.y * Math.cos(theta) + pointStart.y,
+                0
+            )
+            // 材质
+            let material = new LineMaterial({
+                color,
+                linewidth: lineWidth
+            })
+            // 防止线宽过宽
+            material.resolution.set(window.innerWidth, window.innerHeight)
+            let triangle = _drawTriangle(pointStart, pointStart1, pointStart2, color)
+            let geometry = new LineGeometry()
+            geometry.setPositions(_transCoordArr([foot, pointEnd]))
+            let line = new Line2(geometry, material)
+            this.lines.push(line)
+            this.triangles.push(triangle)
+            group.add(line, triangle)
+        }
+        const str = this.code + ''
+        const box = new Box3()
+        box.setFromObject(group)
+        const circleSize = MxFun.screenCoordLong2Doc(10)
+        var geometry2 = new CircleBufferGeometry(circleSize, 72)
+        var material2 = new MeshBasicMaterial({ color })
+        var circle = new Mesh(geometry2, material2)
+        circle.position.set(box.max.x, box.min.y, 0)
+        this.circle = circle
+        group.add(circle)
+        this.layer.add(group)
+        this.graph = group
+        MxFun.getCurrentDraw().updateDisplay()
+        // MxFun.getCurrentDraw().getRenderer().render(MxFun.getCurrentDraw().getScene(), MxFun.getCurrentDraw().getCamera())
     }
 
     getGripPoints(): Vector3[] {
@@ -172,6 +257,7 @@ export async function DrawArrowLineByAction(params, context) {
         worldDrawComment.setDraw(currentPoint => {
             ent.pointList[ent.pointList.length - 1] = currentPoint
             worldDrawComment.drawCustomEntity(ent)
+            MxFun.getCurrentDraw().getRenderer().render(MxFun.getCurrentDraw().getScene(), MxFun.getCurrentDraw().getCamera())
         })
         point.setUserDraw(worldDrawComment)
         point.setMessage("\n再次点击结束绘制椭圆:");

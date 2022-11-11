@@ -33,15 +33,15 @@
             <div id="myChart"></div>
             <CoordinatePrompt />
             <ObjectActionBar :isShow="isShowObjectActionbar" />
-            <canvas :id="canvasId" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
-            <Annotation-tools v-if="isShowAnnotationTools" @postMessage="handleAnnotationMessagePost"></Annotation-tools>
+            <canvas :id="canvasId" @mousedown="canvasMouseDown" @mousemove="canvasMouseMove" @mouseup="canvasMouseUp" @click="canvasClick" @dblclick="canvasDblclick"></canvas>
+            <Annotation-tools v-if="isShowAnnotationTools" :annotationMode="annotationMode" :batchAnnotation="batchAnnotation" @update:mode="val => annotationMode = val" @update:batch="val => batchAnnotation = val" @postMessage="handleAnnotationMessagePost"></Annotation-tools>
             <Camera-tools ref="minimap" :bg="bgImg" :viewer="viewer" :viewport="vp" @postMessage="handleAnnotationMessagePost"></Camera-tools>
             <Measure-Tools v-if="isShowMeasureTools" @postMessage="handleAnnotationMessagePost"></Measure-Tools>
             <div class="bottom-bar">
                 <ul>
-                    <li v-for="item in menus" class="iconfont" @click="item.onClick">
+                    <li v-for="item in menus" class="" @click="item.onClick">
                         <el-tooltip :content="item.name">
-                            <a class="iconfont" :class="item.icon" style="color:orangered;"></a>
+                            <a class="" :class="item.icon" style="color:orangered;"></a>
                         </el-tooltip>
                     </li>
                 </ul>
@@ -60,10 +60,10 @@
 
 </template>
 <script lang="ts">
-import '../iconfont.css'
+import '../iconfontMx.css'
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import configs from '@/config'
-import { MxFun } from 'mxdraw'
+import { MxFun, MxDbLine, MxDbLeadComment } from 'mxdraw'
 import { RegistMxCommands, RxInitMxEntity } from '@/test/command'
 import SheetLayerSettingsWindow, { LayerItemType } from '@/components/SheetLayerSettingsWindow/SheetLayerSettingsWindow.vue'
 import SheetLayoutSettingsWindow, { LayoutItemType } from '@/components/SheetLayoutSettingsWindow/SheetLayoutSettingsWindow.vue'
@@ -77,6 +77,10 @@ import ObjectActionBar from '@/components/ObjectActionBar/ObjectActionBar.vue'
 import AnnotationTools from '@/components/AnnotationTools'
 import MeasureTools from '@/components/MeasureTools'
 import CameraTools from '@/components/CameraTools'
+import { CbimMxDbArrowLine } from '@/test/cbimAnnotation/BR_ArrowLine'
+import { CbimMxDbCloudLine } from '@/test/cbimAnnotation/BR_CloudLine'
+import { CbimMxDbEclipse } from '@/test/cbimAnnotation/BR_Ellipse'
+import { CbimMxDbRect } from '@/test/cbimAnnotation/BR_Rectangle'
 import { Vector2, Raycaster, Box3, FontLoader } from 'three'
 
 const win: any = window
@@ -134,6 +138,9 @@ export default class Home extends Vue {
     currentEnt: any = null
     currentSpace = 'Model'
     fileUrl = '/demo/buf/fjdy.dwg'
+    annotationMode = ''
+    batchAnnotation = false
+    currentDrawing = null
     sidebarMenuData = [
         {
             icon: layerIcon,
@@ -702,6 +709,13 @@ export default class Home extends Vue {
                         this.viewer.updateDisplay()
                     })
                 }
+            },
+            {
+                name: '导出dwg',
+                icon: 'el-icon-download',
+                onClick: () => {
+                    this.saveDrawing()
+                }
             }
         ]
     }
@@ -759,6 +773,158 @@ export default class Home extends Vue {
             intersects = rc.intersectObjects([layer], true)
         }
         return intersects
+    }
+    async saveDrawing() {
+        let mxobj = MxFun.getCurrentDraw()
+        let line = new MxDbLine()
+        const p1 = mxobj.screenCoord2Doc(150 + Math.random() * 300, 150 + Math.random() * 300)
+        const p2 = mxobj.screenCoord2Doc(300 + Math.random() * 300, 300 + Math.random() * 300)
+        line.pt1 = p1
+        line.pt2 = p2
+        line.setColor(0xff0000)
+        line.setDashLineDisplay(true)
+        line.setLineWidth(2)
+        line.setLineWidthByPixels(true)
+
+        let leadComment = new MxDbLeadComment()
+        leadComment.point1 = { x: p1.x + MxFun.screenCoordLong2Doc(20), y: p1.y, z: 0 }
+        leadComment.point2 = { x: p2.x + MxFun.screenCoordLong2Doc(20), y: p2.y, z: 0 }
+        // leadComment.setColor(0x00ff00)
+        leadComment.textHeight = MxFun.screenCoordLong2Doc(20)
+        leadComment.text = '测试Test'
+        // MxFun.addToCurrentSpace(line)
+        MxFun.addToCurrentSpace(leadComment)
+        mxobj.updateDisplay()
+        let sSaveData: any = mxobj.saveMxEntityToObject()
+        sSaveData.saveFile = 'export.dwg'
+        const req = await fetch(`${configs.serverUrl}/savedwgCbim`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: sSaveData,
+                originalFile: this.fileUrl.replace('/demo/buf/', '')
+            })
+        })
+        const resp = await req.json()
+        const sSaveUrl = 'http://10.81.3.40:3000/demo/' + sSaveData.saveFile
+        // 后台程序TsWebNodejs\routes\savedwg.js，它会调用MxFileConvert.exe使用MxDrawNode\src\mxconvert\SaveCommentToDwg.ts把批注数据，保存到demo目录下的hhhhnew.dwg文件中.
+        window.open(sSaveUrl)
+    }
+    canvasMouseDown(e) {
+        console.log('md', e)
+        const pt = this.viewer.screenCoord2Doc(e.offsetX, e.offsetY)
+        console.log('pt', pt)
+        const _addDraw = pt => {
+            if (this.annotationMode == 1) {
+                this.viewer.enablePan(false)
+                this.currentDrawing = new CbimMxDbArrowLine({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: [pt, pt]
+                })
+                this.currentDrawing.draw()
+            }
+            if (this.annotationMode == 2) {
+                this.viewer.enablePan(false)
+                this.currentDrawing = new CbimMxDbCloudLine({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: [pt, pt]
+                })
+                this.currentDrawing.draw()
+            }
+            if (this.annotationMode == 4) {
+                this.viewer.enablePan(false)
+                this.currentDrawing = new CbimMxDbRect({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: [pt, pt]
+                })
+                this.currentDrawing.draw()
+            }
+            if (this.annotationMode == 5) {
+                this.viewer.enablePan(false)
+                this.currentDrawing = new CbimMxDbEclipse({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: [pt, pt]
+                })
+                this.currentDrawing.draw()
+            }
+            console.log(this.currentDrawing)
+        }
+        if (this.annotationMode) {
+            if (this.batchAnnotation) {
+                if (!this.currentDrawing) {
+                    _addDraw(pt)
+                } else {
+                    this.currentDrawing.pointList.push(pt, pt)
+                }
+            } else {
+                _addDraw(pt)
+            }
+        }
+    }
+    timer = null
+    canvasMouseMove(e) {
+        const pt = this.viewer.screenCoord2Doc(e.offsetX, e.offsetY)
+        if (this.annotationMode && this.currentDrawing) {
+            const pts = this.currentDrawing.pointList
+            pts[pts.length - 1] = pt
+            this.viewer.eraseMxEntity(this.currentDrawing.entId)
+            this.viewer.updateDisplay()
+            if (this.annotationMode == 1) {
+                this.currentDrawing = new CbimMxDbArrowLine({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: pts
+                })
+            }
+            if (this.annotationMode == 2) {
+                this.currentDrawing = new CbimMxDbCloudLine({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: pts
+                })
+            }
+            if (this.annotationMode == 4) {
+                this.currentDrawing = new CbimMxDbRect({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: pts
+                })
+            }
+            if (this.annotationMode == 5) {
+                this.currentDrawing = new CbimMxDbEclipse({
+                    annotationId: 'cbim-annotation-temp',
+                    color: '#ff0000',
+                    lineWidth: 1,
+                    pointList: pts
+                })
+            }
+            this.currentDrawing.draw()
+            this.viewer.updateDisplay()
+        }
+    }
+    canvasMouseUp(e) {
+        if (this.annotationMode) {
+            if (this.batchAnnotation) {
+                console.log(123)
+            } else {
+                this.viewer.enablePan(true)
+                this.currentDrawing = null
+            }
+        }
+        console.log(this.viewer.getScene())
     }
 }
 </script>

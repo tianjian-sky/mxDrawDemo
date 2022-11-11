@@ -194,13 +194,14 @@ function getBezierCurvePoint(data, sign) {
     return points
 }
 
-class CbimMxDbCloudLine extends MxDbEntity {
+export class CbimMxDbCloudLine extends MxDbEntity {
     pointList: Array<Vector3> = []
     bezierCurveLength = 10 // 曲线间距
     bezierCurveHeight = 1.2 // 曲线的弧度
     annotationId: String = ''
     layout: String = ''
     code: String = ''
+    entId = null
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -289,8 +290,14 @@ class CbimMxDbCloudLine extends MxDbEntity {
             }
         }
         pWorldDraw.drawEntity(group)
+        MxFun.getCurrentDraw().updateDisplay()
     }
 
+    draw() {
+        const mxDraw = MxFun.getCurrentDraw()
+        this.entId = mxDraw.addMxEntity(this)
+        MxFun.getCurrentDraw().updateDisplay()
+    }
     getGripPoints(): Vector3[] {
         return [] // [this.centerPt, this.acnode]
     }

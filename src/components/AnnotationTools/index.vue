@@ -18,8 +18,8 @@ import ColorPciker from '@/components/ColorPciker/ColorPciker.vue'
 
 export default {
     name: 'AnnotationTools',
-    emit: ['postMessage'],
     components: { ColorPciker },
+    props: ['annotationMode', 'batchAnnotation'],
     data() {
         return {
             annotationOn: false,
@@ -41,16 +41,20 @@ export default {
         }
     },
     watch: {
+        batch(val) {
+            this.$emit('update:batch', val)
+        },
         mode(val) {
-            if (val) {
-                this.$emit('postMessage', this.list.find(item => item.id === val).cmd, {
-                    color: this.color,
-                    lineWidth: this.lineWidth,
-                    batch: this.batch
-                })
-            } else {
-                this.$emit('postMessage', 'Cbim_AnnotationClose')
-            }
+            this.$emit('update:mode', val)
+            // if (val) {
+            //     this.$emit('postMessage', this.list.find(item => item.id === val).cmd, {
+            //         color: this.color,
+            //         lineWidth: this.lineWidth,
+            //         batch: this.batch
+            //     })
+            // } else {
+            //     this.$emit('postMessage', 'Cbim_AnnotationClose')
+            // }
         }
     },
     methods: {

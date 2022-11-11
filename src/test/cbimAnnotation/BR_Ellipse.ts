@@ -75,12 +75,13 @@ function ellipseLine(px, py, mx, my, bezierCurveCircle, bezierCurveArr) {
     bezierCurveArr.push(down)
 }
 
-class CbimMxDbEclipse extends MxDbEntity {
+export class CbimMxDbEclipse extends MxDbEntity {
     pointList: Array<Vector3> = []
     bezierCurveCircle = 6 // 贝塞尔曲线绘制内切圆的时候两个控制点超出的高度系数
     annotationId: String = ''
     layout: String = ''
     code: String = ''
+    entId = null
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -107,6 +108,15 @@ class CbimMxDbEclipse extends MxDbEntity {
             this.code = params.code
         }
     }
+
+    draw() {
+        const mxDraw = MxFun.getCurrentDraw()
+        this.entId = mxDraw.addMxEntity(this)
+        MxFun.getCurrentDraw().updateDisplay()
+    }
+
+    update() { }
+
     worldDraw(pWorldDraw: McGiWorldDraw): void {
         const group = new Group()
         group.userData.type = 'cbim_annotation_eclipse'
@@ -152,6 +162,7 @@ class CbimMxDbEclipse extends MxDbEntity {
             group.add(new Line2(geometry, material))
         }
         pWorldDraw.drawEntity(group)
+        MxFun.getCurrentDraw().updateDisplay()
     }
 
     getGripPoints(): Vector3[] {

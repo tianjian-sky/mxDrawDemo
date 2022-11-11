@@ -10,9 +10,11 @@ const env = process.env.NODE_ENV
 const configs = {
     production: {
         dwgFolder: './public',
+        serverUrl: '/api'
     },
     development: {
-        dwgFolder: ''
+        dwgFolder: '',
+        serverUrl: '/api'
     }
 }
 export default configs[env]

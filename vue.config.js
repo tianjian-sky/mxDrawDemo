@@ -25,6 +25,12 @@ module.exports = {
     devServer: {
         open: process.platform === 'darwin',
         disableHostCheck: true,
+        proxy: {
+            '/api': {
+                target: 'http://10.81.3.40:3000/',
+                pathRewrite: { '^/api': '' }
+            }
+        },
         // host: '',
         port: 8088,
         https: false,

@@ -1,11 +1,12 @@
 import { MrxDbgUiPrPoint, MrxDbgUiPrBaseReturn, MxThreeJS, MxDbEntity, McGiWorldDraw, MxFun, MxDbRect, McEdGetPointWorldDrawObject } from "mxdraw"
 import { BufferAttribute, PlaneBufferGeometry, Group, DoubleSide, MeshBasicMaterial, Vector3, Mesh, Points } from "three";
 
-class CbimMxDbRect extends MxDbEntity {
+export class CbimMxDbRect extends MxDbEntity {
     pointList: Array<Vector3> = []
     annotationId: String = ''
     layout: String = ''
     code: String = ''
+    entId = null
     constructor(params) {
         super(params)
         if (params.pointList) {
@@ -24,6 +25,15 @@ class CbimMxDbRect extends MxDbEntity {
         this.setLineWidth(params.lineWidth)
         this.opacity = params.opacity || 0.5
     }
+
+    draw() {
+        const mxDraw = MxFun.getCurrentDraw()
+        this.entId = mxDraw.addMxEntity(this)
+        MxFun.getCurrentDraw().updateDisplay()
+    }
+
+    update() { }
+
     worldDraw(pWorldDraw: McGiWorldDraw): void {
         let group = new Group()
         group.userData.type = 'cbim_annotation_rectanble'
